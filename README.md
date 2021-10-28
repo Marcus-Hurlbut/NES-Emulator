@@ -1,7 +1,6 @@
-# MARS NES![nes_sample](https://user-images.githubusercontent.com/72711596/139308673-edbacb3c-69ec-44eb-8c5d-4d147261673d.png)
+# Marcus's ARcade System - NES Emulator![nes_sample](https://user-images.githubusercontent.com/72711596/139308673-edbacb3c-69ec-44eb-8c5d-4d147261673d.png)
 
-# Marcus's ARcade System - NES Emulator
-A simple NES emulator prototype using SDL - Still in Devlopment*
+# A simple NES emulator prototype using SDL - Still in Devlopment*
 
 Huge thank you to the following people for making this journey possible:
    - OneLoneCoder: Copyright 2018, 2019, 2020, 2021 OneLoneCoder.com
