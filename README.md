@@ -19,7 +19,6 @@ Huge thank you to the following people for making this journey possible:
 		3. Implement Mapper001
 
    - MARS (SDL)
-		1. Add interface for Controller 2
 		2. Design elegant way to switch between ROMs in runtime
 		3. Higher accuracy in acheiving a flat rate of 60 FPS
 		4. Resolution Scaling for Rendering
