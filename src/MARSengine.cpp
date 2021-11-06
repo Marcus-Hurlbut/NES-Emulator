@@ -135,6 +135,7 @@ void MARS::getControllerState()
     };
     bits &= 0xFF;
     nes.setController(bits, 0);
+    nes.setController(bits, 1);
 }
 
 
@@ -1186,6 +1187,7 @@ bool MARS::eventHandler()
         while(nes.ppu.frameComplete == false)
         {
             nes.systemClock();
+            // logWrite();
         };
 
         // Render and get User Input in between Frames

@@ -43,6 +43,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     // Controller 2 Range
     else if(addr == 0x4017)
     {
+        // Strobes Input on all writes
         controllerState[1] = getController(1);
     }
 
@@ -73,7 +74,7 @@ uint8_t Bus::read(uint16_t addr, bool bReadOnly)
         data = ppu.cpuRead(addr & 0x0007);
     }
 
-    // Controller 1 Range
+    // Controller 1 Mapped Addr
     else if (addr == 0x4016)
     {
         if((controllerState[0] & 0x80) > 0)
@@ -87,17 +88,17 @@ uint8_t Bus::read(uint16_t addr, bool bReadOnly)
         controllerState[0] <<= 1;
     }
 
-    // Controller 2 Range
+    // Controller 2 Mapped Addr
     else if (addr == 0x4017)
     {
-        if ((controllerState[0] & 0x80) > 0)
+        if((controllerState[1] & 0x80) > 0)
         {
             data = 0x01;
         }
         else
         {
             data = 0x00;
-        };
+        }; 
         controllerState[1] <<= 1;
     }
 
@@ -120,6 +121,7 @@ void Bus::setController(uint8_t bits, uint8_t num)
 
 uint8_t Bus::getController(uint8_t num)
 {
+    num &= 0x01;
     return controllers[num];
 }
 
