@@ -1,4 +1,6 @@
-# Marcus's Arcade System - NES Emulator![nes_sample](https://user-images.githubusercontent.com/72711596/139308673-edbacb3c-69ec-44eb-8c5d-4d147261673d.png)
+# Marcus's Arcade System - NES Emulator
+![nes_sample_picture](https://user-images.githubusercontent.com/72711596/140624067-b8f22473-2f48-4f06-83ac-9f06b4b8a3e2.png)
+
 
 # A simple NES emulator using SDL in C++ - Still in Development*
 
