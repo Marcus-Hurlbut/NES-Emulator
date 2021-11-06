@@ -19,10 +19,10 @@ Huge thank you to the following people for making this journey possible:
 		3. Implement Mapper001
 
    - MARS (SDL)
-		2. Design elegant way to switch between ROMs in runtime
-		3. Higher accuracy in acheiving a flat rate of 60 FPS
-		4. Resolution Scaling for Rendering
-		5. Implement Save States
+		1. Design elegant way to switch between ROMs in runtime
+		2. Higher accuracy in acheiving a flat rate of 60 FPS
+		3. Resolution Scaling for Rendering
+		4. Implement Save States
 
    - CPU: 
 		1. Re-design address modes and instructions for cycle accuaracy
@@ -30,3 +30,5 @@ Huge thank you to the following people for making this journey possible:
    - CARTRIDGE
 		1. Re-evaluate logic for PPU mapping, cartridge overrides
 		2. Implement INES2.0 file support
+   - APU
+   		1. Implement Sound APU unit
