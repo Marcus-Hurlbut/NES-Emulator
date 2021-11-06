@@ -985,7 +985,7 @@ void Ppu::fetchSprites()
             // Apply the Horizontal Flip to the Pattern Plane Once bits are read from PPU Bus
             if (sprite_flip == HORIZONTAL)
             {
-                
+                /*
                 auto flipbyte = [](uint8_t b)
 				{
 					b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
@@ -996,9 +996,10 @@ void Ppu::fetchSprites()
 
                 sprShift[sOAM_counter].lo_patternBit = flipbyte(sprite_pattern_bits_lo);
                 sprShift[sOAM_counter].hi_patternBit = flipbyte(sprite_pattern_bits_hi);
+                */
                 
                 /*
-                std::bitset<8U> flipped_pattern = 0x0000;
+                std::bitset<8U> flipped_pattern = 0x00;
 
                 // Apply to Low pattern
                 flipped_pattern = sprite_pattern_bits_lo;
@@ -1006,11 +1007,12 @@ void Ppu::fetchSprites()
                 sprite_pattern_bits_lo = (uint8_t) flipped_pattern.to_ulong();
 
                 // Apply to High pattern
-                flipped_pattern = 0x0000;
+                flipped_pattern = 0x00;
                 flipped_pattern = sprite_pattern_bits_hi; 
                 flipped_pattern = flipped_pattern.flip();
                 sprite_pattern_bits_hi = (uint8_t) flipped_pattern.to_ulong();
                 */
+                
             }
             else
             {
@@ -1020,7 +1022,7 @@ void Ppu::fetchSprites()
             };
             // Fill Latch and Counter with X-Pos & attribute bytes
             sprShift[sOAM_counter].counter = fetchedSprite.positionX;
-            sprShift[sOAM_counter].latch = fetched.tileAttr;
+            sprShift[sOAM_counter].latch = fetchedSprite.attributes;
 
             // Inmcrement sOAM counter each 8th cycle
             sOAM_counter++;
