@@ -11,25 +11,25 @@ Huge thank you to the following people for making this journey possible:
 
 # Bugs to Fix / To-Do List:
    - PPU 
-		1. Fix Black Sky at top of screen on SMB (before nametable switch)
+		1. Fix Black Sky at top of screen on SMB (before nametable switch) [CRITICAL]
 		2. re-write DMA transfers to better fit NES's logic 
           
    - MAPPERS 
 		1. Implement Mapper 002
 		2. Implement Mapper 004
-		3. Implement Mapper001
+		3. Implement Mapper 001
 
    - MARS (SDL)
 		1. Design elegant way to switch between ROMs in runtime
-		2. Higher accuracy in acheiving a flat rate of 60 FPS
+		2. Higher accuracy in acheiving a flat rate of 60 FPS [CRITICAL]
 		3. Resolution Scaling for Rendering
 		4. Implement Save States
 
    - CPU: 
-		1. Re-design address modes and instructions for cycle accuaracy
+		1. Re-design address modes and instructions to achieve cycle accuaracy
  
    - CARTRIDGE
 		1. Re-evaluate logic for PPU mapping, cartridge overrides
-		2. Implement INES2.0 file support
+		2. Implement INES2.0 file support [CRITICAL]
    - APU
    		1. Implement Sound APU unit
