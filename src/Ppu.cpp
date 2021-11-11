@@ -379,8 +379,8 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data)
         // Control Register
         case 0x0000:
             r.controller = data;
-            setTVRAM(NAMETABLE_X, (uint16_t) getControllerFlags(n) & 0x01);
-            setTVRAM(NAMETABLE_Y, (uint16_t) getControllerFlags(N) & 0x01);
+            setTVRAM(NAMETABLE_X, (uint16_t) getControllerFlags(n) & 0x0001);
+            setTVRAM(NAMETABLE_Y, (uint16_t) getControllerFlags(N) & 0x0001);
             break;
 
         // Mask Register
@@ -719,7 +719,7 @@ inline void Ppu::strobeShiftRegisters()
     };
 
     // If SPR rendering enabled
-    if(getMaskBits(s) && cycles >= 1 && cycles <= 257)
+    if(getMaskBits(s) && cycles >= 1 && cycles <= 256)
     {
         for (int i = 0; i < spritesThisLine; i++)
         {
@@ -1125,11 +1125,25 @@ void Ppu::setScreenPixels()
     // Check to see if Sprite or Background pixel has priority
     if(checkSprPriority(bkg_pixel, spr_pixel, spr_priority) == true)
     {
-        palAddr = ppuRead(0x3F00 + (spr_palette << 2) + spr_pixel) & 0x3F;
+        if(spr_pixel != 0)
+        {
+            palAddr = ppuRead(0x3F00 + (spr_palette << 2) + spr_pixel) & 0x3F;
+        }
+        else
+        {
+            palAddr = ppuRead(0x3F00 + (0 << 2) + 0) & 0x3F;            
+        }
     }
     else
     {
-        palAddr = ppuRead(0x3F00 + (bkg_palette << 2) + bkg_pixel) & 0x3F;
+        if(bkg_pixel != 0)
+        {        
+            palAddr = ppuRead(0x3F00 + (bkg_palette << 2) + bkg_pixel) & 0x3F;
+        }
+        else
+        {
+            palAddr = ppuRead(0x3F00 + (0 << 2) + 0) & 0x3F;
+        }
     };
     // Get RGB values from color palette
     renderPixel.red = tbl.colors[palAddr].red;
@@ -1202,7 +1216,7 @@ void Ppu::tick()
                     // Fetch Background tile 
                     fetchBackground();              
 
-                    // Increment Coarse Y
+                    // Increment Coarse Y - The effective Y scroll coordinate is incremented
                     if (cycles == 256)
                     {
                         incrementY();               
