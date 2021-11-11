@@ -11,8 +11,7 @@ Huge thank you to the following people for making this journey possible:
 
 # Bugs to Fix / To-Do List:
    - PPU 
-		1. Fix Black Sky at top of screen on SMB (before nametable switch) [CRITICAL]
-		2. re-write DMA transfers to better fit NES's logic 
+		1. re-write DMA transfers to better fit NES's logic
           
    - MAPPERS 
 		1. Implement Mapper 002
