@@ -216,6 +216,7 @@ class Ppu
         
         enum SpriteFlip
         {
+            BOTH,
             VERTICAL,
             HORIZONTAL,
             NORMAL

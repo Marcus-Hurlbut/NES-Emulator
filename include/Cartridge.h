@@ -24,11 +24,22 @@ class Cartridge
         void prgWrite(uint16_t addr,  uint8_t data);
 
         // Cartridge Mapping Override on PPU
-        bool chrRead(uint16_t addr, uint8_t &data);
-        bool chrWrite(uint16_t addr,  uint8_t data);
+        void chrRead(uint16_t addr, uint8_t &data);
+        void chrWrite(uint16_t addr,  uint8_t data);
+
+        // Unmapped PPU Read/Writes
+        void unmappedRead(uint16_t addr, uint8_t &data);
+        void unmappedWrite(uint16_t addr, uint8_t data);
 
         bool ImageValid();
         void reset();
+
+        struct PpuTables
+        {
+            uint8_t name[2][1024];         // 2 Nametables
+            uint8_t patterns[2][4096];     // Left & Right Planes          
+        };
+        PpuTables tbl;
 
         enum MIRROR
         {

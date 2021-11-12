@@ -26,7 +26,9 @@ class Mapper
 
         virtual void reset() = 0;
 
+
     protected:
         uint8_t nPRGBanks;
         uint8_t nCHRBanks;
+
 };
