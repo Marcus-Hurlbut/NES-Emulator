@@ -133,91 +133,33 @@ uint8_t Ppu::ppuRead(uint16_t addr)
     // Read to PPU bus
     uint8_t data = 0x00;
     addr &= 0x3FFF;
-       
-    if (cart->chrRead(addr, data))
+    
+    // Nametable & Pattern Tables
+    if (addr < 0x3F00)
     {
-
+        cart->chrRead(addr, data);
     }
+    // Palettes Table
     else
     {
-        switch (addr)
-        {   
-            // Pattern Tables
-            case 0x0000 ... 0x1FFF:
-                data = tbl.patterns[((addr & 0x1000) & 0x2000) > 0][addr & 0x0FFF];
-                break;
+        // Pallete Mirroring
+        addr &= 0x001F;
+        if (addr == 0x0010 || addr == 0x0014 || addr == 0x0018 || addr == 0x001C)
+        {
+            addr &= 0x000F;
+        };
 
-            // Name Tables
-            case 0x2000 ... 0x3EFF:
-                addr &= 0x0FFF;
-
-                // Vertical Mirror
-                if(cart->mirror == Cartridge::MIRROR::VERTICAL)
-                {
-                    switch (addr)
-                    {
-                        case 0x0000 ... 0x03FF:
-                            data = tbl.name[0][addr & 0x03FF];
-                            break;
-                            
-                        case 0x0400 ... 0x07FF:
-                            data = tbl.name[1][addr & 0x03FF];
-                            break;
-
-                        case 0x0800 ... 0x0BFF:
-                            data = tbl.name[0][addr & 0x03FF];
-                            break;
-
-                        case 0x0C00 ... 0x0FFF:
-                            data = tbl.name[1][addr & 0x03FF];
-                            break;
-                    };
-                }
-                // Horizontal Mirror
-                else if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
-                {
-                    switch (addr)
-                    {
-                        case 0x0000 ... 0x03FF:
-                            data = tbl.name[0][addr & 0x03FF];
-                            break;
-                            
-                        case 0x0400 ... 0x07FF:
-                            data = tbl.name[0][addr & 0x03FF];
-                            break;
-
-                        case 0x0800 ... 0x0BFF:
-                            data = tbl.name[1][addr & 0x03FF];
-                            break;
-
-                        case 0x0C00 ... 0x0FFF:
-                            data = tbl.name[1][addr & 0x03FF];
-                            break;
-                    };
-                }               
-                break;
-                
-            // Palettes
-            case 0x3F00 ... 0x3FFF:
-                addr &= 0x001F;
-
-                if (addr == 0x0010 || addr == 0x0014 || addr == 0x0018 || addr == 0x001C)
-                {
-                    addr &= 0x000F;
-                };
-                // Check for Greyscalling pixel
-                if(getMaskBits(G))
-                {
-                    data = tbl.palettesMem[addr];
-                    data &= 0x30;
-                }
-                else
-                {
-                    data = tbl.palettesMem[addr];
-                    data &= 0x3F;
-                }; 
-                break;
-        };      
+        // Check for Greyscalling pixel
+        if(getMaskBits(G))
+        {
+            data = tbl.palettesMem[addr];
+            data &= 0x30;
+        }
+        else
+        {
+            data = tbl.palettesMem[addr];
+            data &= 0x3F;
+        }; 
     };
     return data;
 }
@@ -225,82 +167,23 @@ uint8_t Ppu::ppuRead(uint16_t addr)
 void Ppu::ppuWrite(uint16_t addr, uint8_t data)
 {
     addr &= 0x3FFF;
-    if (cart->chrWrite(addr, data))
+
+    // Nametable & Pattern Table
+    if (addr < 0x3F00)
     {
-        
+        cart->chrWrite(addr, data);
     }
+    // Palette Table
     else
-    {
-        switch (addr)
-        {   
-            // Pattern Tables
-            case 0x0000 ... 0x1FFF:
-                tbl.patterns[((addr & 0x1000) & 0x2000) > 0][addr & 0x0FFF] = data;
-                break;
-
-            // Name Tables
-            case 0x2000 ... 0x3EFF:
-                addr &= 0x0FFF;
-
-                // Vertical Mirror
-                if(cart->mirror == Cartridge::MIRROR::VERTICAL)
-                {
-                    switch (addr)
-                    {
-                        case 0x0000 ... 0x03FF:
-                            tbl.name[0][addr & 0x03FF] = data;
-                            break;
-                            
-                        case 0x0400 ... 0x07FF:
-                            tbl.name[1][addr & 0x03FF] = data;
-                            break;
-
-                        case 0x0800 ... 0x0BFF:
-                            tbl.name[0][addr & 0x03FF] = data;
-                            break;
-
-                        case 0x0C00 ... 0x0FFF:
-                            tbl.name[1][addr & 0x03FF] = data;
-                            break;
-                    };
-                }
-                // Horizontal Mirror
-                else if (cart->mirror == Cartridge::MIRROR::HORIZONTAL)
-                {
-                    switch (addr)
-                    {
-                        case 0x0000 ... 0x03FF:
-                            tbl.name[0][addr & 0x03FF] = data;
-                            break;
-                            
-                        case 0x0400 ... 0x07FF:
-                            tbl.name[0][addr & 0x03FF] = data;
-                            break;
-
-                        case 0x0800 ... 0x0BFF:
-                            tbl.name[1][addr & 0x03FF] = data;
-                            break;
-
-                        case 0x0C00 ... 0x0FFF:
-                            tbl.name[1][addr & 0x03FF] = data;
-                            break;
-                    };
-                }               
-                break;
-                
-            // Palettes
-            case 0x3F00 ... 0x3FFF:
-                addr &= 0x001F;
-
-                if (addr == 0x0010 || addr == 0x0014 || addr == 0x0018 || addr == 0x001C)
-                {
-                    addr &= 0x000F;
-                };
-
-                tbl.palettesMem[addr] = data;
-                break;
-
+    {     
+        // Palette Mirroring
+        addr &= 0x001F;
+        if (addr == 0x0010 || addr == 0x0014 || addr == 0x0018 || addr == 0x001C)
+        {
+            addr &= 0x000F;
         };
+
+        tbl.palettesMem[addr] = data;
     };
 }
 

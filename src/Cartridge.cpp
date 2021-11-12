@@ -131,31 +131,159 @@ void Cartridge::prgWrite(uint16_t addr,  uint8_t data)
 }
 
 
-bool Cartridge::chrRead(uint16_t addr, uint8_t &data)
+void Cartridge::chrRead(uint16_t addr, uint8_t &data)
 {
     uint32_t mappedAddr = 0;
 
-    // Read Mapped address from specific Mapper
+    // Read from Mapped address from Mapper
     if(pMapper->mappedChrRead(addr, mappedAddr))
     {
         data = CHR_Memory[mappedAddr];
-        return true;
     }
-
-    return false;
+    // Read from Un-Mapped Addr
+    else
+    {
+        unmappedRead(addr, data);
+    };
 }
 
 
-bool Cartridge::chrWrite(uint16_t addr,  uint8_t data)
+void Cartridge::chrWrite(uint16_t addr,  uint8_t data)
 {
     uint32_t mappedAddr = 0;
 
-    // Write Mapped address from specific Mapper
+    // Write to Mapped address from Mapper
     if(pMapper->mappedChrWrite(addr, mappedAddr))
     {
         CHR_Memory[mappedAddr] = data;
-        return true;
     }
+    // Write to Un-Mapped Addr
+    else
+    {
+        unmappedWrite(addr, data);
+    };
+}
 
-    return false;
+
+
+void Cartridge::unmappedRead(uint16_t addr, uint8_t &data)
+{
+    switch (addr)
+    {   
+        // Pattern Tables
+        case 0x0000 ... 0x1FFF:
+            data = tbl.patterns[((addr & 0x1000) & 0x2000) > 0][addr & 0x0FFF];
+            break;
+
+        // Name Tables
+        case 0x2000 ... 0x3EFF:
+            addr &= 0x0FFF;
+
+            // Vertical Mirror
+            if(mirror == VERTICAL)
+            {
+                switch (addr)
+                {
+                    case 0x0000 ... 0x03FF:
+                        data = tbl.name[0][addr & 0x03FF];
+                        break;
+                            
+                    case 0x0400 ... 0x07FF:
+                        data = tbl.name[1][addr & 0x03FF];
+                        break;
+
+                    case 0x0800 ... 0x0BFF:
+                        data = tbl.name[0][addr & 0x03FF];
+                        break;
+
+                    case 0x0C00 ... 0x0FFF:
+                        data = tbl.name[1][addr & 0x03FF];
+                        break;
+                };
+            }
+            // Horizontal Mirror
+            else if (mirror == HORIZONTAL)
+            {
+                switch (addr)
+                {
+                    case 0x0000 ... 0x03FF:
+                        data = tbl.name[0][addr & 0x03FF];
+                        break;
+                            
+                    case 0x0400 ... 0x07FF:
+                        data = tbl.name[0][addr & 0x03FF];
+                        break;
+
+                    case 0x0800 ... 0x0BFF:
+                        data = tbl.name[1][addr & 0x03FF];
+                        break;
+
+                    case 0x0C00 ... 0x0FFF:
+                        data = tbl.name[1][addr & 0x03FF];
+                        break;
+                };
+            }               
+            break;     
+    };
+}
+
+void Cartridge::unmappedWrite(uint16_t addr, uint8_t data)
+{
+    switch (addr)
+    {   
+        // Pattern Tables
+        case 0x0000 ... 0x1FFF:
+            tbl.patterns[((addr & 0x1000) & 0x2000) > 0][addr & 0x0FFF] = data;
+            break;
+
+        // Name Tables
+        case 0x2000 ... 0x3EFF:
+            addr &= 0x0FFF;
+
+            // Vertical Mirror
+            if(mirror == VERTICAL)
+            {
+                switch (addr)
+                {
+                    case 0x0000 ... 0x03FF:
+                        tbl.name[0][addr & 0x03FF] = data;
+                        break;
+                            
+                    case 0x0400 ... 0x07FF:
+                        tbl.name[1][addr & 0x03FF] = data;
+                        break;
+
+                    case 0x0800 ... 0x0BFF:
+                        tbl.name[0][addr & 0x03FF] = data;
+                        break;
+
+                    case 0x0C00 ... 0x0FFF:
+                        tbl.name[1][addr & 0x03FF] = data;
+                        break;
+                };
+            }
+            // Horizontal Mirror
+            else if (mirror == HORIZONTAL)
+            {
+                switch (addr)
+                {
+                    case 0x0000 ... 0x03FF:
+                        tbl.name[0][addr & 0x03FF] = data;
+                        break;
+                            
+                    case 0x0400 ... 0x07FF:
+                        tbl.name[0][addr & 0x03FF] = data;
+                        break;
+
+                    case 0x0800 ... 0x0BFF:
+                        tbl.name[1][addr & 0x03FF] = data;
+                        break;
+
+                    case 0x0C00 ... 0x0FFF:
+                        tbl.name[1][addr & 0x03FF] = data;
+                        break;
+                };
+            }               
+            break;
+    };
 }
