@@ -58,6 +58,15 @@ Cartridge::Cartridge(const std::string &FileName)
         // NES2.0 file format
         else if (file_format == NES20)
         {
+            // Resizing Number of PRG Banks
+            nPRGBanks = ((header.prg_ram_size & 0x07) << 8) | header.prg_rom_chunks;
+            PRG_Memory.resize(nPRGBanks * 16384);
+            file.read((char*) CHR_Memory.data(), CHR_Memory.size());
+
+            // Resizing Number of CHR Banks
+            nCHRBanks = ((header.prg_ram_size & 0x38) << 8) | header.chr_rom_chunks;
+            CHR_Memory.resize(nCHRBanks * 8192);
+            file.read((char*) CHR_Memory.data(), CHR_Memory.size());
 
         };
 
@@ -85,6 +94,7 @@ Cartridge::Cartridge(const std::string &FileName)
                 break;
 
             case 2:
+                pMapper = std::make_shared<Mapper002>(nPRGBanks, nCHRBanks);
                 break;
         };
         imageValid = true;
@@ -114,7 +124,10 @@ void Cartridge::prgRead(uint16_t addr, uint8_t &data)
     // Read Mapped address from specific Mapper
     if(pMapper->mappedPrgRead(addr, mappedAddr))
     {
-        data = PRG_Memory[mappedAddr];
+        if (mappedAddr != 0xFFFFFFFF)
+        {
+            data = PRG_Memory[mappedAddr];
+        };
     };
 }
 
@@ -126,7 +139,10 @@ void Cartridge::prgWrite(uint16_t addr,  uint8_t data)
     // Write Mapped address from specific Mapper
     if(pMapper->mappedPrgWrite(addr, mappedAddr, data))
     {
-        PRG_Memory[mappedAddr] = data;
+        if (mappedAddr != 0xFFFFFFFF)
+        {
+            PRG_Memory[mappedAddr] = data;
+        };
     };
 }
 
