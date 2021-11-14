@@ -1066,7 +1066,6 @@ inline void MARS::drawPatternTables()
 
 void MARS::resetPatternTables(uint8_t palette)
 {
-    //palette &= 0x03;
     plane.left = nes.ppu.getPatternTables(0, palette);
     nes.ppu.patterns.clear();
 
@@ -1096,7 +1095,6 @@ inline void MARS::drawPalettes()
         SDL_RenderFillRect(renderer, &box);
         if((indx == 4) || (indx == 8) || (indx == 12) || (indx == 20) || (indx == 24) || (indx == 28))
         {
-            //Y += 40;
             X += 40;
         }
 
@@ -1110,11 +1108,8 @@ inline void MARS::drawPalettes()
             X += 20;
         }
 
-        
-
         i++;
         indx++;
-
     }
 }
 
@@ -1139,13 +1134,6 @@ void MARS::logWrite()
             wLog << " Y:";    wLog << std::hex << (int) nes.cpu.reg.Y;
             wLog << " P:";    wLog << std::hex << (int) nes.cpu.reg.P;
             wLog << " SP:";   wLog << std::hex << (int) nes.cpu.reg.S;
-
-            //wLog << "\t R/W:";  wLog << nes.bus_accessType;
-            //wLog << "\t\t Controller:";  wLog << std::hex << (int) nes.controllers[0];
-            //wLog << "\t\t Controller State:";  wLog << std::hex << (int) nes.controllerState[0];
-
-
-            //wLog << "\t\t Bus Data:";  wLog << std::hex << (int) nes.bus_data;
 
             wLog << "\n";
             wLog.close();
@@ -1292,7 +1280,7 @@ void MARS::init()
     sm_font = TTF_OpenFont("fonts/Urial.ttf", 80);
     space_font = TTF_OpenFont("fonts/Gatsby.ttf", 80);
 
-    uint8_t console = 4;
+    uint8_t console = 9;
     switch (console)
     {
         case 1:
@@ -1330,6 +1318,7 @@ void MARS::init()
             };
             selectedGame = "Super Mario Bros";
             break;
+
         case 5:
             cart = std::make_shared<Cartridge>("roms/Dr.Mario.nes");
             if (!cart->ImageValid())
@@ -1337,6 +1326,8 @@ void MARS::init()
 			    SDL_Quit();
             };
             selectedGame = "Dr. Mario";
+            break;
+
         case 6:
             cart = std::make_shared<Cartridge>("roms/SpaceInvaders.nes");
             if (!cart->ImageValid())
@@ -1345,6 +1336,7 @@ void MARS::init()
             };
             selectedGame = "Space Invaders";
             break;
+
         case 7:
             cart = std::make_shared<Cartridge>("roms/Pac-Man.nes");
             if (!cart->ImageValid())
@@ -1353,6 +1345,22 @@ void MARS::init()
             };
             selectedGame = "Pac-Man";
             break;
+        case 8:
+            cart = std::make_shared<Cartridge>("roms/Pinball.nes");
+            if (!cart->ImageValid())
+            {
+			    SDL_Quit();
+            };
+            selectedGame = "Pinball";
+            break;
+
+        case 9:
+            cart = std::make_shared<Cartridge>("roms/MegaMan.nes");
+            if (!cart->ImageValid())
+            {
+                SDL_Quit();
+            };
+            selectedGame = "Mega Man";
         
         default:
             break;
@@ -1377,16 +1385,9 @@ int main(int argc, char* argv[])
 
 
 
-
-
-
-
-
-
 //nes.cpuRam[0xFFFC] = 0x00;
 //nes.cpuRam[0xFFFD] = 0xC0;
 
 // COMPILE
-//g++ *.cpp -IC:\SDL_32bit\i686-w64-mingw32\include\SDL2 -IC:\SDL_ttf\include\SDL2 -LC:\SDL_32bit\i686-w64-mingw32\lib -LC:\SDL_ttf\lib -w -Wl,-subsystem,windows -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -o mars.exe
-
+// mingw32-make -f Makefile
 // g++ *.cpp -IC:\SDL_32bit\i686-w64-mingw32\include\SDL2 -IC:\SDL_ttf\include\SDL2 -LC:\SDL_32bit\i686-w64-mingw32\lib -LC:\SDL_ttf\lib -w -Wl,-subsystem,windows -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -o mars.exe

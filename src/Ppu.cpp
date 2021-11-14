@@ -1,6 +1,7 @@
 // Copyright 2018, 2019, 2020, 2021 OneLoneCoder.com
 
 #include "Ppu.h"
+#include "Bus.h"
 
 Ppu::Ppu()
 {
@@ -124,6 +125,24 @@ std::vector<Ppu::RGB> Ppu::getPalettes()
     };
 
     return palettes;
+}
+
+void Ppu::transferDMA(uint8_t &addr_offset, uint8_t &DMA_addr)
+{
+    // Even Cycles - reads OAM data from Bus
+    if (DMAtoggle)
+    {
+        DMA_data = 0x00;
+        DMA_data = bus->read(addr_offset << 8 | DMA_addr);
+        DMAtoggle = false;
+    }
+    // Odd Cycles - Data is written to OAM address pointer
+    else
+    {
+        pOAM_addr[DMA_addr] = DMA_data;
+        DMA_addr++;
+        DMAtoggle = true;
+    }
 }
 
 

@@ -1,13 +1,11 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-using namespace std;
-
 #include <stdio.h>
 #include <stdint.h>
+
 #include "Cpu.h"
 #include "Bus.h"
-
 
 
 Cpu::Cpu()
@@ -510,13 +508,6 @@ inline void Cpu::setDisassemblyOp(uint8_t op1, uint8_t op2, bool mult_ops)
             d.get_opcode_instruction[1] = "  ";
         };
     };
-}
-
-uint8_t Cpu::transferDMA(uint8_t &addr_offset, uint8_t &dma_addr)
-{   
-    uint8_t data = 0x00;
-    data = read(addr_offset << 8 | dma_addr);
-    return data;
 }
 
 

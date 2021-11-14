@@ -2,8 +2,9 @@
 
 Bus::Bus() 
 {
-    // Connect CPU -> Bus
+    // Connect PPU and CPU to the Bus
     cpu.ConnectBus(this);
+    ppu.ConnectBus(this);
 }
 
 Bus::~Bus(){}
@@ -161,19 +162,12 @@ void Bus::systemClock()
             continue_transfer = true;
             DMA_cycles = 513;
         }
-        // Even Cycles - CPU reads data from bus
-        else if(NES_SystemClock % 2 == 0 && continue_transfer == true)
+        // DMA Transfer
+        else if(continue_transfer == true)
         {
-            DMA_transferData = cpu.transferDMA(DMA_offset, DMA_addr);
+            ppu.transferDMA(DMA_offset, DMA_addr);
             DMA_cycles--;
         }
-        // Odd Cycles - Data is written to OAM address pointer
-        else if(NES_SystemClock % 2 == 1 && continue_transfer == true)
-        {
-            ppu.pOAM_addr[DMA_addr] = DMA_transferData;
-            DMA_addr++;
-            DMA_cycles--;
-        };
 
 
         // End of DMA Transfer - reset values
