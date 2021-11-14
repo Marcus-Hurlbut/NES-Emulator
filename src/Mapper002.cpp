@@ -7,9 +7,7 @@ Mapper002::Mapper002(uint8_t prgBanks, uint8_t chrBanks) : Mapper(prgBanks, chrB
 }
 
 Mapper002::~Mapper002()
-{
-
-}
+{}
 
 void Mapper002::reset()
 {
