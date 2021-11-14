@@ -11,8 +11,8 @@ Huge thank you to the following people for making this journey possible:
 
 # Bugs to Fix / To-Do List:          
    - MAPPERS
-		2. Implement Mapper 004
-		3. Implement Mapper 001
+		1. Implement Mapper 004
+		2. Implement Mapper 001
 
    - MARS (SDL)
 		1. Design elegant way to switch between ROMs in runtime
