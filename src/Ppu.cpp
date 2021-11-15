@@ -273,9 +273,9 @@ uint8_t Ppu::cpuRead(uint16_t addr)
     return data;
 }
 
+// Write to CPU mapped registers
 void Ppu::cpuWrite(uint16_t addr, uint8_t data)
 {
-    // Write to CPU mapped registers
     switch (addr)
     {  
         // Control Register
@@ -363,8 +363,9 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data)
 }
 
 
-// ---------------------------- MAPPED REGISTERS ---------------------------- //
-// Controller flags manipulation
+// PPU MAPPED REGISTERS
+
+// Controller Flag Operations
 inline uint8_t Ppu::getControllerFlags(ControllerFlags cBits)
 {
     if ((r.controller & cBits) > 0)
@@ -389,7 +390,7 @@ inline void Ppu::setControllerFlags(ControllerFlags cBits, bool mode)
     };
 }
 
-// Mask register manipulation
+// Mask Flag Operations
 inline uint8_t Ppu::getMaskBits(MaskBits mBits)
 {
     if ((r.mask & mBits) > 0)
@@ -414,7 +415,7 @@ inline void Ppu::setMaskBits(MaskBits mBits, bool mode)
     };
 }
 
-// Status register manipulations
+// Status Flag Operations
 inline uint8_t Ppu::getStatusBits(StatusBits sBits)
 {
     if((r.status & sBits) > 0)
@@ -439,6 +440,7 @@ inline void Ppu::setStatusBits(StatusBits sBits, bool mode)
     };
 }
 
+// VRAM Operations
 inline uint16_t Ppu::getVRAM(VRAMRegisters vreg)
 {
     uint16_t reg = 0;
@@ -507,7 +509,7 @@ inline void Ppu::setVRAM(VRAMRegisters vreg, uint16_t vreg_data)
     currVRAM &= VRAM_REG;
 }
 
-
+// Temporary VRAM Operations
 inline uint16_t Ppu::getTVRAM(VRAMRegisters tvreg)
 {
     uint16_t reg = 0;
@@ -578,8 +580,7 @@ inline void Ppu::setTVRAM(VRAMRegisters tvreg, uint16_t tvreg_data)
 }
 
 
-// ---------------------------- BACKGROUND ---------------------------- //
-// Update Shift Registers - values from the latches are fed to the shift registers
+// Update Background Shift Registers - values from the latches are fed to the shift registers
 void Ppu::updateBackgroundShiftRegisters()
 {
     shift.patternLeft = (shift.patternLeft & 0xFF00) | fetched.patternLeft;
@@ -605,7 +606,7 @@ void Ppu::updateBackgroundShiftRegisters()
 
 }
 
-// Iterate through Shift Register data
+// Iterate through Sprite & Background Shift Registers
 inline void Ppu::strobeShiftRegisters()
 {
     // If BKG rendering enabled
@@ -638,6 +639,7 @@ inline void Ppu::strobeShiftRegisters()
     };
 }
 
+// Increment Coarse X in VRAM 
 void Ppu::incrementCoarseX()
 {
     if(getMaskBits(b) || getMaskBits(s))
@@ -654,6 +656,7 @@ void Ppu::incrementCoarseX()
     };
 }
 
+// Increment Coarse & Fine Y in VRAM
 void Ppu::incrementY()
 {
     if(getMaskBits(b) || getMaskBits(s))
@@ -874,7 +877,7 @@ void Ppu::fetchSprites()
 
 
 // Checks range & size of Sprite
-inline bool Ppu::spriteRangeCheck()
+bool Ppu::spriteRangeCheck()
 {
     // Ensure data boundary Check
     if (sprites_found <= 9 && pOAM_counter < 64)
@@ -906,24 +909,26 @@ inline bool Ppu::spriteRangeCheck()
     return false;
 }
 
-bool Ppu::checkSprPriority(uint8_t bkg_pixel, uint8_t spr_pixel, bool spr_priority)
+void Ppu::checkSpritePriority(uint8_t bkg_pixel, uint8_t bkg_pal, uint8_t spr_pixel, uint8_t spr_pal)
 {
-    bool spriteHasPriority = false;
 
     // Background Pixel is visible
     if(bkg_pixel > 0 && spr_pixel == 0)
     {
-        spriteHasPriority = false;
+        screenPixel = bkg_pixel;
+        screenPalette = bkg_pal;
     }
     else if (bkg_pixel == 0x00 && spr_pixel == 0x00)
     {
-        spriteHasPriority = false;
+        screenPixel = 0x00;
+        screenPalette = 0x00;
     }
 
     // Sprite Pixel is visible
     else if (bkg_pixel == 0 && spr_pixel > 0)
     {
-        spriteHasPriority = true;
+        screenPixel = spr_pixel;
+        screenPalette = spr_pal;
     }
 
     // Check for Sprite Priority & Sprite Zero Hit
@@ -932,11 +937,13 @@ bool Ppu::checkSprPriority(uint8_t bkg_pixel, uint8_t spr_pixel, bool spr_priori
         // If bit 5 of attribute is 0: sprite has priority
         if (spr_priority == true)
         {
-            spriteHasPriority =  true;
+            screenPixel = spr_pixel;
+            screenPalette = spr_pal;
         }
         else
         {
-            spriteHasPriority =  false;
+            screenPixel = bkg_pixel;
+            screenPalette = bkg_pal;
         };
 
         // Detect if this is a sprite 0 overlap
@@ -960,8 +967,6 @@ bool Ppu::checkSprPriority(uint8_t bkg_pixel, uint8_t spr_pixel, bool spr_priori
         };
       
     };
-
-    return spriteHasPriority;
 }
 
 Ppu::Pixels Ppu::getScreenPixels()
@@ -977,7 +982,7 @@ void Ppu::setScreenPixels()
 
     uint8_t spr_pixel = 0x00;
     uint8_t spr_palette = 0x00;
-    bool spr_priority = false;
+    spr_priority = false;
 
     // Get Background pixel
     if(getMaskBits(b) && (getMaskBits(m) || cycles >= 9))
@@ -1025,28 +1030,12 @@ void Ppu::setScreenPixels()
         };
     }
     // Check to see if Sprite or Background pixel has priority
-    if(checkSprPriority(bkg_pixel, spr_pixel, spr_priority) == true)
-    {
-        if(spr_pixel != 0)
-        {
-            palAddr = ppuRead(0x3F00 + (spr_palette << 2) + spr_pixel) & 0x3F;
-        }
-        else
-        {
-            palAddr = ppuRead(0x3F00 + (0 << 2) + 0) & 0x3F;            
-        }
-    }
-    else
-    {
-        if(bkg_pixel != 0)
-        {        
-            palAddr = ppuRead(0x3F00 + (bkg_palette << 2) + bkg_pixel) & 0x3F;
-        }
-        else
-        {
-            palAddr = ppuRead(0x3F00 + (0 << 2) + 0) & 0x3F;
-        }
-    };
+    checkSpritePriority(bkg_pixel, bkg_palette, spr_pixel, spr_palette);
+    
+    // Read the Addr that stores the color value
+    palAddr = ppuRead(0x3F00 + (screenPalette << 2) + screenPixel) & 0x3F;
+
+
     // Get RGB values from color palette
     renderPixel.red = tbl.colors[palAddr].red;
     renderPixel.green = tbl.colors[palAddr].green;
