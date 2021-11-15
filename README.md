@@ -21,7 +21,8 @@ Huge thank you to the following people for making this journey possible:
 		4. Implement Save States
 
    - CPU: 
-		1. Re-design address modes and instructions to achieve cycle accuaracy
+		1. Redesign address modes and instructions to achieve cycle accuaracy
+		2. Rewrite Disassembly Log functionality
  
 
    - APU
