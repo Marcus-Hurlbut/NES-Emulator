@@ -9,20 +9,25 @@ Huge thank you to the following people for making this journey possible:
    - NESDev: https://www.nesdev.com/
    - EmuDev: https://www.reddit.com/r/EmuDev/
 
+# Dependencies
+   - MinGW32 g++
+   - SDL library
+   - TTL library
+
 # Bugs to Fix / To-Do List:          
    - MAPPERS
 		1. Implement Mapper 004
-		2. Implement Mapper 001
+		2. Implement Mapper 003
+		3. Implement Mapper 001
 
    - MARS (SDL)
 		1. Design elegant way to switch between ROMs in runtime
 		2. Higher accuracy in acheiving a flat rate of 60 FPS [CRITICAL]
-		3. Resolution Scaling for Rendering
 		4. Implement Save States
 
    - CPU: 
 		1. Redesign address modes and instructions to achieve cycle accuaracy
-		2. Rewrite Disassembly Log functionality
+		2. Optimize Disassembly Log & add to separate module 
  
 
    - APU
