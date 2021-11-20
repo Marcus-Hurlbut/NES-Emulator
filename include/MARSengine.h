@@ -13,6 +13,7 @@
 #include <memory>
 #include <windows.h>
 #include <algorithm>
+#include <chrono>
 
 
 #include "Bus.h"
@@ -38,23 +39,27 @@ class MARS
         ~MARS();
 
     private:
+        // NES System Components
         Bus nes;
         std::shared_ptr<Cartridge> cart;
+
+        // Frame Counter Variables
         int count = 0;
         int FPS = 0;
-        Uint32 ticks = 0;
-        Uint32 prevTick = 0;
+        Uint32 cur_tick = 0;
+        Uint32 prev_tick = 0;
 
-        Uint32 frame_start = 0;
-        Uint32 frame_end = 0;
+        // Frame Timing Sync Variables
+        std::chrono::high_resolution_clock::time_point frame_start;
+        std::chrono::high_resolution_clock::time_point frame_elapsed;
 
+        // Emulator Speed Variables
         Uint32 marsSpeed = 0;
         Uint32 marsStart = 0;
 
         stringstream text_ss;
-        uint32_t* leftPlaneBuffer = nullptr;
-        uint32_t* rightPlaneBuffer = nullptr;
-
+        uint32_t* leftPlaneBuffer = nullptr;    // NES PPU Left Pattern Table buffer
+        uint32_t* rightPlaneBuffer = nullptr;   // NES PPU Right Pattern Table buffer
 
     public:
         // SDL variables
@@ -138,25 +143,29 @@ class MARS
 
         void init();
 
-        inline void drawPatternTables();                    // Draw NES Pattern tables
+        void drawPatternTables();                           // Draw NES Pattern tables
         inline void resetPatternTables(uint8_t palette);    // Reset Pattern Table Buffers
-        inline void drawPalettes();                         // Draw NES Palette Colors
-        inline void drawCpu();                              // Draw NES CPU Status's
-        inline void drawRam();                              // Draw NES specified RAM Contents
-        inline void drawPpu();                              // Draw NES PPU Register values
-        inline void drawSystemComponents();                 // Draw System Information and Disassembly
-        void drawPixels();                                  // Draw Frame Pixels
+        void drawPalettes();                                // Draw NES Palette Colors
+
+        void drawNesInfo();                    // Draw NES CPU & PPU Register values
+        void drawEngineInfo();                 // Draw System Information and Disassembly
+        void drawNesFrame();                   // Draw NES Frame Pixels
 
         uint32_t aRGB(uint32_t R, uint32_t G, uint32_t B, uint32_t a);
 
                                          
-        void keyboardInput(SDL_Event &event);
+        bool keyboardInput(SDL_Event &event);
         void getControllerState();
         void logWrite();
 
-    // Helper Functions
+    // Assistive Functions
     private:
-        void renderTexture(TTF_Font* font, const char *text, SDL_Color &color);
-        void drawScreen(); 
+        void renderTexture(TTF_Font* font, const char *text, SDL_Color &color);     // Renders a text texture
+        inline const char* getHexValue(uint8_t num);                                // Get String Hex Value
+        void renderScreen();                                                        // Render All Screen Components
+
+        void syncClockSpeed();          // Synchronize to run at 60 FPS
+        void calculateFrameRate();      // Calculate the real-time FPS 
+        void calculateEmulatorSpeed();     // Calculate the Clock Speed of the Emulator
 
 };
