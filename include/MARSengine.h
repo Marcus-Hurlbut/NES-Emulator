@@ -1,5 +1,5 @@
 #include "SDL2/SDL.h"
-#include "SDL_ttf.h"
+#include "SDL2/SDL_ttf.h"
 
 #include <stdio.h>
 #include <array>
@@ -23,7 +23,7 @@
 #define LOGICAL_WIDTH 256
 #define LOGICAL_HEIGHT 240
 #define WIDTH 2560
-#define HEIGHT 1300
+#define HEIGHT 1440
 
 #define RIGHT_L_JUSTIFIED 2100
 #define RIGHT_R_JUSTIFIED 2300
@@ -120,6 +120,7 @@ class MARS
         TTF_Font *styled_font;
         TTF_Font *space_font;
 
+        // Rendering Colors
         SDL_Color Red = {255, 0, 0};
         SDL_Color Green = {0, 255, 0};
         SDL_Color Blue = {0, 0, 255};
@@ -127,10 +128,9 @@ class MARS
         SDL_Color Gold = {212, 175, 55};
 
         bool eventHandler();
-        bool debugMode();
         bool debMode = false;
         
-
+    // NES Functions
     private:
         uint8_t selectedPalette = 0;
         vector<PixelPlane> pix;
@@ -138,20 +138,25 @@ class MARS
 
         void init();
 
-        inline void drawPatternTables();
-        inline void resetPatternTables(uint8_t palette);
-        inline void drawPalettes();
-        inline void drawCpu();
-        inline void drawRam();
-        inline void drawPpu();
-        inline void drawSystemComponents();
-        void drawPixels();
+        inline void drawPatternTables();                    // Draw NES Pattern tables
+        inline void resetPatternTables(uint8_t palette);    // Reset Pattern Table Buffers
+        inline void drawPalettes();                         // Draw NES Palette Colors
+        inline void drawCpu();                              // Draw NES CPU Status's
+        inline void drawRam();                              // Draw NES specified RAM Contents
+        inline void drawPpu();                              // Draw NES PPU Register values
+        inline void drawSystemComponents();                 // Draw System Information and Disassembly
+        void drawPixels();                                  // Draw Frame Pixels
 
         uint32_t aRGB(uint32_t R, uint32_t G, uint32_t B, uint32_t a);
 
-        void drawScreen();
+                                         
         void keyboardInput(SDL_Event &event);
         void getControllerState();
         void logWrite();
+
+    // Helper Functions
+    private:
+        void renderTexture(TTF_Font* font, const char *text, SDL_Color &color);
+        void drawScreen(); 
 
 };
