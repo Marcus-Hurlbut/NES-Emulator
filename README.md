@@ -1,4 +1,5 @@
 # Marcus's Arcade System - NES Emulator
+![smb](https://user-images.githubusercontent.com/72711596/142738692-0539fdf0-a7f4-45d0-84f1-6a3824a8808e.png)
 ![nes_sample_picture](https://user-images.githubusercontent.com/72711596/140624067-b8f22473-2f48-4f06-83ac-9f06b4b8a3e2.png)
 
 
