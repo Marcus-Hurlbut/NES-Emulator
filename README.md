@@ -3,7 +3,7 @@
 ![nes_sample_picture](https://user-images.githubusercontent.com/72711596/140624067-b8f22473-2f48-4f06-83ac-9f06b4b8a3e2.png)
 
 
-# A simple NES emulator using SDL in C++ - Still in Development*
+# NES emulator using SDL in C++ - Still in Development*
 
 Huge thank you to the following people for making this journey possible:
    - OneLoneCoder: Copyright 2018, 2019, 2020, 2021 OneLoneCoder.com
