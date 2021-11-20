@@ -22,13 +22,12 @@ Huge thank you to the following people for making this journey possible:
 
    - MARS (SDL)
 		1. Design elegant way to switch between ROMs in runtime
-		2. Higher accuracy in acheiving a flat rate of 60 FPS [CRITICAL]
-		4. Implement Save States
+		2. Implement Save States
+		3. Create UI Overlay / Port to 3D engine (likely Vulkan)
 
    - CPU: 
 		1. Redesign address modes and instructions to achieve cycle accuaracy
 		2. Optimize Disassembly Log & add to separate module 
  
-
    - APU
    		1. Implement Sound APU unit
