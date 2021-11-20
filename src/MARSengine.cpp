@@ -7,8 +7,9 @@ MARS::MARS()
 
 MARS::~MARS(){}
 
-void MARS::keyboardInput(SDL_Event &event)
-{
+bool MARS::keyboardInput(SDL_Event &event)
+{   
+    // Get SDL/Interface Input
     switch(event.key.keysym.sym)
     {
         // Shift Pattern Table Selector Right        
@@ -40,9 +41,7 @@ void MARS::keyboardInput(SDL_Event &event)
         // Reset NES
         case SDLK_r:
             nes.systemReset();
-            SDL_RenderClear(rend_debug);
-            drawScreen();
-
+            break;
 
         // Display RAM Contents
         case SDLK_PAGEDOWN:
@@ -51,14 +50,17 @@ void MARS::keyboardInput(SDL_Event &event)
         
         // Quit Application
         case SDLK_ESCAPE:
-            SDL_DestroyRenderer(renderer);
-            SDL_Quit();
-            break;
+            return false;
 
         default:
             break;
 
     }
+
+    // Get NES Controller Input
+    getControllerState();
+
+    return true;
 }
 
 void MARS::getControllerState()
@@ -110,6 +112,7 @@ void MARS::getControllerState()
     nes.setController(bits, 1);
 }
 
+// Render a Text Texture (Assistive function)
 void MARS::renderTexture(TTF_Font* font, const char *text, SDL_Color &color)
 {
     surface = TTF_RenderText_Solid(font, text, color);
@@ -123,111 +126,136 @@ void MARS::renderTexture(TTF_Font* font, const char *text, SDL_Color &color)
     SDL_DestroyTexture(texture);
 }
 
-
-inline void MARS::drawCpu()
+// Get Hex Value in String Form (Assistive function)
+inline const char* MARS::getHexValue(uint8_t num)
 {
-    // PC Text
+    // Clear String Stream & Initialize
+    text_ss.str(std::string());
+    text_ss.clear();
+
+    // Get Hex Value
+    text_ss << std::hex << (int)num;
+    const char* hex = text_ss.str().c_str();
+
+    return hex;
+}
+
+
+// Speed of the Overall Emulator clock speed (before synchronizing to run at 60 FPS)
+void MARS::calculateEmulatorSpeed()
+{
+    marsSpeed = SDL_GetTicks();
+    marsSpeed = (marsSpeed - marsStart);
+}
+
+
+void MARS::calculateFrameRate()
+{
+    // Current Tick count
+    cur_tick = SDL_GetTicks();
+
+    // Reset Count every Second
+    if ((cur_tick - prev_tick) >= 1000)
+    {
+        prev_tick = cur_tick;
+        FPS = count;
+        count = 0;
+    }
+    // +1 to Frame Rate Count
+    else
+    {
+        count++;
+    };
+}
+
+
+// Synchronize Clock speed to Render at contant 60 FPS 
+void MARS::syncClockSpeed()
+{
+    long time_span = 0;
+
+    // 1 frame every 16.66 milliseconds - 16,666 microseconds
+    while ((time_span) <= 16200)
+    {
+        frame_elapsed = std::chrono::high_resolution_clock::now();
+        time_span = std::chrono::duration_cast<std::chrono::microseconds>(frame_elapsed - frame_start).count();
+    };
+    
+}
+
+
+// Draws the NES system information text
+void MARS::drawNesInfo()
+{
+    // CPU PC
     X = RIGHT_L_JUSTIFIED;
     Y = 650;
     W = 100;
     H = 35;
     renderTexture(styled_font, "PC:", Red);
-
-
-    // PC Value
-    text_ss.str( std::string() );
-    text_ss.clear();
-    text_ss << std::hex << nes.cpu.reg.PC;
-    const char *pc = text_ss.str().c_str();
+    const char *pc = getHexValue(nes.cpu.reg.PC);
     X = RIGHT_R_JUSTIFIED;
     W += 50;
     renderTexture(lg_font, pc, White);
 
-
-    // Accumulator Text
+    // CPU Accumulator
     X = RIGHT_L_JUSTIFIED;
     Y = 700;
     W = 50;
     H = 35;
     renderTexture(styled_font, "A:", Red);
-
-    // Accumulator Value
-    text_ss.str( std::string() );
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.cpu.reg.A;
-    const char *a = text_ss.str().c_str();
+    const char *a = getHexValue(nes.cpu.reg.A);
     X = RIGHT_R_JUSTIFIED;
     Y = 700;
     W = 75;
     H = 35;
     renderTexture(lg_font, a, White);
 
-
-    // X Register Text
+    // CPU X Register Text
     X = RIGHT_L_JUSTIFIED;
     Y = 750;
     W = 50;
     H = 35;
     renderTexture(styled_font, "X:", Red);
-
-    // X Register Value
-    text_ss.str( std::string() );
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.cpu.reg.X;
-    const char *x = text_ss.str().c_str();
+    const char *x = getHexValue(nes.cpu.reg.X);
     X = RIGHT_R_JUSTIFIED;
     Y = 750;
     W = 75;
     H = 35;
     renderTexture(lg_font, x, White);
 
-
-    // Y Register Text
+    // CPU Y Register 
     X = RIGHT_L_JUSTIFIED;
     Y = 800;
     W = 50;
     H = 35;
     renderTexture(styled_font, "Y:", Red);
-
-    // Y Register Value
-    text_ss.str( std::string() );
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.cpu.reg.Y;
-    const char *y = text_ss.str().c_str();
+    const char *y = getHexValue(nes.cpu.reg.Y);
     X = RIGHT_R_JUSTIFIED;
     Y = 800;
     W = 75;
     H = 35;
     renderTexture(lg_font, y, White);
 
-
-    // Stack Text
+    // CPU Stack Text
     X = RIGHT_L_JUSTIFIED;
     Y = 850;
     W = 125;
     H = 35;
     renderTexture(styled_font, "STACK:", Red);
-
-    // Stack Value
-    text_ss.str( std::string() );
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.cpu.reg.S;
-    const char *stack = text_ss.str().c_str();
+    const char *stack = getHexValue(nes.cpu.reg.S);
     X = RIGHT_R_JUSTIFIED;
     Y = 850;
     W = 75;
     H = 35;
     renderTexture(lg_font, stack, White);
 
-    // Status Flag Text
+    // CPU Status Flag 
     X = RIGHT_L_JUSTIFIED;
     Y = 900;
     W = 125;
     H = 35;
     renderTexture(styled_font, "STATUS:", Red);
-
-
-    // Status Flag Values
     std::bitset<8> status = nes.cpu.reg.P;
     X = RIGHT_R_JUSTIFIED;
     Y = 900;
@@ -255,115 +283,45 @@ inline void MARS::drawCpu()
         X += 25;
         j--;
     };
-}
 
-
-inline void MARS::drawPpu()
-{
-
-    // Controller Register Text
+    // PPU Controller Register
     X = RIGHT_L_JUSTIFIED;
     Y = 450;
     W = 175;
     H = 35;
     renderTexture(styled_font, "CONTROLLER: ", Red);
-
-    // Controller Register Values
-    text_ss.str(std::string());
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.ppu.r.controller;;
-    const char* controllerVal = text_ss.str().c_str();
+    const char* controllerVal = getHexValue(nes.ppu.r.controller);
     X = RIGHT_R_JUSTIFIED;
     Y = 450;
     W = 75;
     H = 35;
     renderTexture(lg_font, controllerVal, White);
 
-
-    // Mask Register Text
+    // PPU Mask Register
     X = RIGHT_L_JUSTIFIED;
     Y = 500;
     W = 175;
     H = 35;
     renderTexture(styled_font, "MASK: ", Red);
-
-    //  Mask Register Values
-    text_ss.str(std::string());
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.ppu.r.mask;;
-    const char* maskVal = text_ss.str().c_str();
+    const char* maskVal = getHexValue(nes.ppu.r.mask);
     X = RIGHT_R_JUSTIFIED;
     Y = 500;
     W = 75;
     H = 35;
     renderTexture(lg_font, maskVal, White);
 
-
-    // Status Register
+    // PPU Status Register
     X = RIGHT_L_JUSTIFIED;
     Y = 550;
     W = 175;
     H = 35;
     renderTexture(styled_font, "STATUS: ", Red);
-
-    text_ss.str(std::string());
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.ppu.r.status;;
-    const char* statusVal = text_ss.str().c_str();
+    const char* statusVal = getHexValue(nes.ppu.r.status);
     X = RIGHT_R_JUSTIFIED;
     Y = 550;
     W = 75;
     H = 35;
     renderTexture(lg_font, statusVal, White);
-}
-
-
-inline void MARS::drawSystemComponents()
-{
-    int global_count = nes.NES_SystemClock;
-
-    // Draw MARS Title
-    X = 100;
-    Y = 50;
-    W = 350;
-    H = 120;
-    renderTexture(space_font, "M.A.R.S", Red);
-
-    X = 130;
-    Y = 200;
-    W = 290;
-    H = 45;
-    renderTexture(styled_font, "Marcus's ARcade System", Red);
-
-
-    // Draw Selected Console
-    X = LEFT_L_JUSTIFIED;
-    Y = 350;
-    W = 200;
-    H = 45;
-    renderTexture(styled_font, "CONSOLE: ", Red);
-
-    const char *console = selectedConsole.c_str();
-    X = LEFT_R_JUSTIFIED;
-    Y = 350;
-    W = 150;
-    H = 45;
-    renderTexture(styled_font, console, White);
-
-
-    // Draw Selected Game
-    X= LEFT_L_JUSTIFIED;
-    Y = 400;
-    W = 200;
-    H = 45;
-    renderTexture(styled_font, "GAME: ", Red);
-
-    const char *game = selectedGame.c_str();
-    X = LEFT_R_JUSTIFIED;
-    Y = 400;
-    W = 200;
-    H = 45;
-    renderTexture(styled_font, game, White);
 
     // Draw Global Counter Text
     X = RIGHT_L_JUSTIFIED;
@@ -371,16 +329,13 @@ inline void MARS::drawSystemComponents()
     W = 125;
     H = 35;
     renderTexture(styled_font, "CYCLE:", Red);
-
-    // Draw Global Counter Value
-    std::string str2 = to_string(global_count);
-    const char *gCountVal = str2.c_str();
+    std::string str2 = to_string(nes.NES_SystemClock);
+    const char* gCountVal = str2.c_str();
     X = RIGHT_R_JUSTIFIED;
     Y = 1000;
     W = 150;
     H = 35;
     renderTexture(lg_font, gCountVal, White);
-
 
     // Draw Instruction
     X = RIGHT_L_JUSTIFIED;
@@ -388,9 +343,8 @@ inline void MARS::drawSystemComponents()
     W = 150;
     H = 35;
     renderTexture(styled_font, "INSTRUCTION:", Red);
-
     std::string instruction = nes.cpu.d.get_instruction;
-    const char *instructVal = instruction.c_str();
+    const char* instructVal = instruction.c_str();
     X = RIGHT_R_JUSTIFIED;
     Y = 1050;
     W = 100;
@@ -406,34 +360,29 @@ inline void MARS::drawSystemComponents()
     renderTexture(styled_font, "ADDR MODE:", Red);
 
     std::string addrm = nes.cpu.d.get_addrmode;
-    const char *addrmode = addrm.c_str();
+    const char* addrmode = addrm.c_str();
     X = RIGHT_R_JUSTIFIED;
     Y = 1100;
     W = 100;
     H = 35;
     renderTexture(lg_font, addrmode, White);
 
-
-    // Draw Opcodes Text
+    // Draw Opcodes
     X = RIGHT_L_JUSTIFIED;
     Y = 1150;
     W = 125;
     H = 35;
     renderTexture(styled_font, "OPCODES:", Red);
-
-    // Draw Opcodes Value
-    text_ss.str( std::string() );
+    text_ss.str(std::string());
     text_ss.clear();
     text_ss << std::hex << (int)nes.cpu.d.get_opcode;
     text_ss << " " << nes.cpu.d.get_opcode_instruction[0] << " " << nes.cpu.d.get_opcode_instruction[1];
-    const char *opcode = text_ss.str().c_str();
-    
+    const char* opcode = text_ss.str().c_str();
     X = RIGHT_R_JUSTIFIED;
     Y = 1150;
     W = 200;
     H = 35;
     renderTexture(lg_font, opcode, White);
-
 
     // Draw Disassembly Log
     X = 150;
@@ -441,29 +390,72 @@ inline void MARS::drawSystemComponents()
     W = 250;
     H = 35;
     renderTexture(styled_font, "- DISASSEMBLY -", Red);
-
     auto vDisassembly = nes.cpu.d.disassembly;
-    int j = 0;
+    
+    j = 0;
     X = LEFT_L_JUSTIFIED;
     Y = 575;
     W = 425;
     H = 35;
-
-    for(auto i = 0; i != vDisassembly.size(); i++)
+    for (auto i = 0; i != vDisassembly.size(); i++)
     {
         const char* disassembly = vDisassembly[i].c_str();
         renderTexture(sm_font, disassembly, White);
         Y += 35;
         j++;
-    }; 
-    
+    };
+
+}
+
+// Draws the Emulator system information text
+void MARS::drawEngineInfo()
+{
+    int global_count = nes.NES_SystemClock;
+
+    // Draw MARS Title
+    X = 100;
+    Y = 50;
+    W = 350;
+    H = 120;
+    renderTexture(space_font, "M.A.R.S", Red);
+    X = 130;
+    Y = 200;
+    W = 290;
+    H = 45;
+    renderTexture(styled_font, "Marcus's ARcade System", Red);
+
+    // Draw Selected Console
+    X = LEFT_L_JUSTIFIED;
+    Y = 350;
+    W = 200;
+    H = 45;
+    renderTexture(styled_font, "CONSOLE: ", Red);
+    const char *console = selectedConsole.c_str();
+    X = LEFT_R_JUSTIFIED;
+    Y = 350;
+    W = 150;
+    H = 45;
+    renderTexture(styled_font, console, White);
+
+    // Draw Selected Game
+    X= LEFT_L_JUSTIFIED;
+    Y = 400;
+    W = 200;
+    H = 45;
+    renderTexture(styled_font, "GAME: ", Red);
+    const char *game = selectedGame.c_str();
+    X = LEFT_R_JUSTIFIED;
+    Y = 400;
+    W = 200;
+    H = 45;
+    renderTexture(styled_font, game, White);
+
     // Draw FPS
     X = RIGHT_L_JUSTIFIED;
     Y = 300;
     W = 90;
     H = 35;
     renderTexture(styled_font, "FPS", Red);
-    
     std::string sFps = std::to_string(FPS);
     const char *fpsVal = sFps.c_str();
     X = RIGHT_R_JUSTIFIED - 50;
@@ -472,22 +464,15 @@ inline void MARS::drawSystemComponents()
     H = 35;
     renderTexture(lg_font, fpsVal, White);
 
-
-    // Draw Nes Clock Speed Text
+    // Draw System Engine Clock Speed
     X = RIGHT_L_JUSTIFIED;
     Y = 350;
     W = 120;
     H = 35;
     renderTexture(styled_font, "CLOCK SPEED", Red);
     
-
-    // Draw Nes Clock Speed 
-    marsSpeed = SDL_GetTicks();
-    marsSpeed = (marsSpeed - marsStart);
-    marsStart = SDL_GetTicks();
     sFps = std::to_string((marsSpeed));
     const char *mars_clock = sFps.c_str();
-
     X = RIGHT_R_JUSTIFIED - 50;
     Y = 350;
     W = 75;
@@ -496,8 +481,8 @@ inline void MARS::drawSystemComponents()
 
 }
 
-
-void MARS::drawPixels()
+// Draws Each frame for NES screen
+void MARS::drawNesFrame()
 {
     if (nes.ppu.frameComplete == true )
     {
@@ -531,15 +516,15 @@ void MARS::drawPixels()
     };
 }
 
-
+// Places Color info in 32 bit buffer (Assistive function)
 uint32_t MARS::aRGB(uint32_t R, uint32_t G, uint32_t B, uint32_t a)
 {
     uint32_t color = (a << 24) | (R << 16) | (G << 8) | B;
     return color;
 }
 
-
-inline void MARS::drawPatternTables()
+// Draw the 2 NES Pattern Tables 
+void MARS::drawPatternTables()
 {
     // Draw Left Plane Pattern Table
     uint32_t j = 0;
@@ -621,10 +606,10 @@ inline void MARS::drawPatternTables()
         SDL_RenderCopy(renderer, pat.texture, NULL, &pat.box);
         SDL_DestroyTexture(pat.texture);
     };
-
 }
 
-void MARS::resetPatternTables(uint8_t palette)
+// Reset the Pixel Plane buffer for the patterns
+inline void MARS::resetPatternTables(uint8_t palette)
 {
     plane.left = nes.ppu.getPatternTables(0, palette);
     nes.ppu.patterns.clear();
@@ -633,7 +618,8 @@ void MARS::resetPatternTables(uint8_t palette)
     nes.ppu.patterns.clear();
 }
 
-inline void MARS::drawPalettes()
+// Render the NES Palette Colors stored in RAM
+void MARS::drawPalettes()
 {
     auto palettes = nes.ppu.getPalettes();
 
@@ -642,7 +628,7 @@ inline void MARS::drawPalettes()
     Y = 230;
     W = 20;
     H = 20;
-    int indx = 1;
+    int indx = 0;
 
     for (auto j = palettes.begin(); j != palettes.end(); j++)
     {
@@ -653,21 +639,20 @@ inline void MARS::drawPalettes()
         box.w = W;
         box.h = H;
         SDL_RenderFillRect(renderer, &box);
-        if((indx == 4) || (indx == 8) || (indx == 12) || (indx == 20) || (indx == 24) || (indx == 28))
-        {
-            X += 40;
-        }
 
-        else if (indx == 16)
+        if (indx == 15)
         {
             Y += 25;
             X = RIGHT_L_JUSTIFIED;
+        }
+        else if ((indx + 1) % 4 == 0)
+        {
+            X += 40;
         }
         else
         {
             X += 20;
         }
-
         i++;
         indx++;
     }
@@ -702,22 +687,21 @@ void MARS::logWrite()
     
 }
 
-void MARS::drawScreen()
+void MARS::renderScreen()
 {
-    if(nes.ppu.frameComplete == true || debMode == true)
-    {
-        SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
-        SDL_RenderClear(renderer);
-                
-        drawPixels();
-        drawCpu();
-        drawPpu();
-        drawPalettes();
-        drawPatternTables();
-        drawSystemComponents();
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
+    SDL_RenderClear(renderer);
+        
+    // Draw Pixels
+    drawNesFrame();
+    drawPalettes();
+    drawPatternTables();
 
-        SDL_RenderPresent(renderer);
-    };
+    // Draw Text Information
+    drawNesInfo();
+    drawEngineInfo();
+
+    SDL_RenderPresent(renderer);
 }
 
 
@@ -728,61 +712,54 @@ bool MARS::eventHandler()
 
     while (On)
     {
-        frame_start = SDL_GetTicks();
+        // Start Timer for Frame Sync & Emulator clock Speed
+        frame_start = std::chrono::high_resolution_clock::now();
 
-        // Clock an entire frame
+        marsStart = SDL_GetTicks();
+
+        // Clock NES for entire frame 
         while(nes.ppu.frameComplete == false)
         {
             nes.systemClock();
-            // logWrite();
+            // logWrite();  -- uncomment for txt log -- 
         };
 
-        // Render and get User Input in between Frames
+        // Render Frame & get User Input
         if(nes.ppu.frameComplete == true)
         {
-
+            // Event Handling
             if (SDL_PollEvent(&event))
             {
                 switch(event.type)
                 {
+                    // Handle Application Exit
                     case SDL_QUIT:
                         On = false;
                         break;
-
+                    
+                    // Handle User Input
                     case SDL_KEYDOWN:
-                        keyboardInput(event);
+                        if (!keyboardInput(event))
+                        {
+                            On = false;
+                        }
                         break;
                     
                     default:
                         break;
                 };
             };
-
             // Calculate Framerate
-            ticks = SDL_GetTicks();
-            if ((ticks - prevTick) > 1000) 
-            {
-                prevTick = ticks;
-                FPS = count;
-                count = 0;
-            }
-            else
-            {
-                count++;
-            };
+            calculateFrameRate();
 
-            // Gets Input for NES controller
-            getControllerState();
+            // Render Screen
+            renderScreen();
 
-            // Finally Draw the frame
-            drawScreen();
-            frame_end = SDL_GetTicks();
+            // Calculate Emulator Speed
+            calculateEmulatorSpeed();
 
-            // Set to 60 frames per second
-            while((frame_end - frame_start) < 16)
-            {
-                frame_end = SDL_GetTicks();
-            };
+            // Sync to run at constant 60 FPS
+            syncClockSpeed();
         };
     };
     SDL_DestroyRenderer(renderer);
@@ -919,7 +896,6 @@ void MARS::init()
 int main(int argc, char* argv[])
 {
     MARS mars;
-
     mars.eventHandler();    // Main Event Handler
     SDL_Quit();
 
