@@ -11,21 +11,29 @@
 
 #include "Cartridge.h"
 
+class Bus;
 
 class Ppu
 {
     public:
+        // Constructor & Deconstructor
         Ppu();
         ~Ppu();
 
         // PPU Memory Bus
         std::array <uint8_t, 2048> ppuRam;     // PPU RAM
         std::shared_ptr<Cartridge> cart;
+
+        // Bus Connection for DMA Transfers
+        Bus *bus = nullptr;
+        void ConnectBus(Bus *n)
+        {
+            bus = n;
+        }
         void connectCartridge(const std::shared_ptr<Cartridge> &cartridge);
 
 
-        // ---------------------------- Memory-mapped registers (CPU) ---------------------------- //
-        // PPU Registers
+        // PPU Memory-mapped registers (to CPU)
         struct MappedRegisters
         {
             uint8_t controller = 0;         // Controller - Various flags controlling PPU operation
@@ -90,7 +98,7 @@ class Ppu
     
 
     public:
-        // ---------------------------- PPU Tables ---------------------------- //
+        // Colors values of Palettes
         struct RGB
         {
             uint8_t red = 255;
@@ -98,7 +106,7 @@ class Ppu
             uint8_t blue = 0;
         };
 
-        // Pixel info to be rendered
+        // Pixel Values to be rendered
         struct Pixels
         {
             uint8_t red = 0;
@@ -108,31 +116,28 @@ class Ppu
             uint8_t Y = 0;
         };
 
-        // Pixels for Engine
-        std::vector <Pixels> patterns;      // Pattern Table Pixels
-        Pixels screenPixels[61440] = {0};   // Screen Pixels
+        // Pixels for Engine & Rendering
+        std::vector <Pixels> patterns;      // Pattern Table Pixels for Rendering
+        std::vector <RGB> palettes;         // Palette Pixels for Rendering
+        Pixels screenPixels[61440] = {0};   // Screen Pixel Buffer for Rendering
+        Pixels renderPixel = {0};           // Individual Pixel info for Screen Pixels
         uint32_t pixel_counter = 0;         // Iterator for Pixel Array
-        Pixels renderPixel = {0};           // Individual Pixel info
-        std::vector <RGB> palettes;         // Palette Pixels
 
-        // Name Tables - 32x32 bytes(256x240 bits on screen) : $2000 -> $3EFF
+        // Palette Table and Colors Table are Physically in the PPU (No Mapping)
         struct Tables
         {
-            uint8_t name[2][1024];         // 2 Nametables
-            uint8_t patterns[2][4096];     // Left & Right Planes
             std::vector <RGB> colors;      // 2C02 Color palette of RGB values
             uint8_t palettesMem[32];       // Memory locations for sprites & background
         };
         Tables tbl;
 
 
-        // ---------------------------- Screen Rendering ---------------------------- //
+        // PPU Timing & Interupts
         int16_t scanLine = 0;
         int16_t cycles = 0;
         bool NMI = false;
 
-        // ---------------------------- Internal Registers ---------------------------- //    
-        // Internal Registers - Addresses that the PPU reads during background rendering
+        // PPU Internal V-RAM - Addresses that the PPU reads during background rendering
         enum VRAMRegisters
         {
             COARSE_X = 0x001F,
@@ -145,7 +150,6 @@ class Ppu
 
         inline uint16_t getVRAM(VRAMRegisters vreg);
         inline void setVRAM(VRAMRegisters vreg, uint16_t vreg_data);
-
         inline uint16_t getTVRAM(VRAMRegisters vreg);
         inline void setTVRAM(VRAMRegisters vreg, uint16_t vreg_data);
 
@@ -155,8 +159,8 @@ class Ppu
         uint8_t toggle = 0x00;
         uint8_t buffer = 0x00;
 
-        // ---------------------------- Background Rendering ---------------------------- //
-        // PPU background fetched values
+
+        // PPU background Fetched values for Shift Register
         struct Fetch
         {
             uint8_t tileNameTbl;
@@ -165,21 +169,19 @@ class Ppu
             uint8_t patternRight;
         };
         Fetch fetched;
-        int iteration = 0;
 
-
-        // PPU Shift Registers
-        struct ShiftRegisters
+        // PPU Background Shift Registers
+        struct BackgroundShiftRegisters
         {
             uint16_t palAttribLow;
             uint16_t palAttribHi;
             uint16_t patternLeft;
             uint16_t patternRight;
         };
-        ShiftRegisters shift;
+        BackgroundShiftRegisters shift;
 
 
-        // ---------------------------- Sprite Rendering ---------------------------- //
+        // Individual OAM / Sprite Values
         struct Sprite
         {
             uint8_t positionY;
@@ -188,11 +190,14 @@ class Ppu
             uint8_t positionX;
         };
         Sprite OAM [64];
-        uint8_t *pOAM_addr = (uint8_t*) OAM;
         Sprite second_OAM[8];
         Sprite fetchedSprite;
 
-        struct SpriteShifters
+        // OAM Address pointer
+        uint8_t *pOAM_addr = (uint8_t*) OAM;
+
+        // PPU Sprite Shift Registers
+        struct SpriteShiftRegisters
         {
             uint8_t lo_patternBit;
             uint8_t hi_patternBit;
@@ -201,18 +206,18 @@ class Ppu
             uint8_t counter;
             uint8_t latch;
         };
-        SpriteShifters sprShift[8];
+        SpriteShiftRegisters sprShift[8];
 
         uint8_t pOAM_counter = 0;        // Counts through elements in primary OAM (0 - 63)
         uint8_t sOAM_counter = 0;       // Counts through elements in secondary OAM (0 - 7)
+
         uint8_t sprites_found = 0;      // # of sprites found for next scanline
-        uint8_t spritesThisLine = 0;
-        uint8_t spr_init = 0;
+        uint8_t spritesThisLine = 0;    // # of sprites found for this scanline
+        uint8_t spr_init = 0;           // Secondary OAM Initializer counter
 
-        bool sprZeroPossible = false;
-        bool sprZeroThisLine = false;
-
-        bool sprZeroRendering = false;
+        bool sprZeroPossible = false;   // Detects if Sprite Zero is possible to occur on frame
+        bool sprZeroThisLine = false;   // Detects if sprite Zero is on this scanline
+        bool sprZeroRendering = false;  // Detects if current tick is Sprite Zero
         
         enum SpriteFlip
         {
@@ -231,13 +236,22 @@ class Ppu
         uint8_t cpuRead(uint16_t addr);
         void cpuWrite(uint16_t addr, uint8_t data);
 
-        
+        // DMA functions
+        void transferDMA(uint8_t &addr_offset, uint8_t &dma_addr);
+        bool DMAtoggle = true;
+        uint8_t DMA_data = 0x00;
+
+        // Pattern & Palette Tables for Rendering
         std::vector<Ppu::Pixels> getPatternTables(int plane, uint8_t pal);
         std::vector<Ppu::RGB> getPalettes();
-        uint8_t palAddr = 0x00;
 
+        // NES Frame Pixels & attributes for Rendering
         Ppu::Pixels getScreenPixels();
         void setScreenPixels();
+        uint8_t screenPixel = 0x00;
+        uint8_t screenPalette = 0x00;
+        uint8_t palAddr = 0x00;
+        bool spr_priority = false;
 
 
         // System Operations
@@ -259,7 +273,7 @@ class Ppu
         void fetchSprites();
 
         // Sprite functions
-        inline bool spriteRangeCheck();
-        bool checkSprPriority(uint8_t bkg_pixel, uint8_t spr_pixel, bool spr_priority);
+        bool spriteRangeCheck();
+        void checkSpritePriority(uint8_t bkg_pixel, uint8_t bkg_pal, uint8_t spr_pixel, uint8_t spr_pal);
    
 };
