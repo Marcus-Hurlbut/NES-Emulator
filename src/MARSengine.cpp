@@ -54,12 +54,7 @@ bool MARS::keyboardInput(SDL_Event &event)
 
         default:
             break;
-
     }
-
-    // Get NES Controller Input
-    getControllerState();
-
     return true;
 }
 
@@ -141,14 +136,14 @@ inline const char* MARS::getHexValue(uint8_t num)
 }
 
 
-// Speed of the Overall Emulator clock speed (before synchronizing to run at 60 FPS)
+// Overall Speed of the Emulator's frame rendering (before synchronizing to run at 60 FPS)
 void MARS::calculateEmulatorSpeed()
 {
     marsSpeed = SDL_GetTicks();
     marsSpeed = (marsSpeed - marsStart);
 }
 
-
+// Calulate number of frames iterated each second in application
 void MARS::calculateFrameRate()
 {
     // Current Tick count
@@ -169,7 +164,7 @@ void MARS::calculateFrameRate()
 }
 
 
-// Synchronize Clock speed to Render at contant 60 FPS 
+// Synchronize Clock speed to Render at contant 60 FPS using Chrono
 void MARS::syncClockSpeed()
 {
     long time_span = 0;
@@ -470,7 +465,6 @@ void MARS::drawEngineInfo()
     W = 120;
     H = 35;
     renderTexture(styled_font, "CLOCK SPEED", Red);
-    
     sFps = std::to_string((marsSpeed));
     const char *mars_clock = sFps.c_str();
     X = RIGHT_R_JUSTIFIED - 50;
@@ -556,6 +550,7 @@ void MARS::drawPatternTables()
             }
             else
             {
+                // Map buffer addresss to the X & Y Coordinates
                 location =  (plane.left[j].Y * 128) + plane.left[j].X;
             };
             leftPlaneBuffer[location] = aRGB(plane.left[j].red, plane.left[j].green, plane.left[j].blue, 255);
@@ -727,7 +722,7 @@ bool MARS::eventHandler()
         // Render Frame & get User Input
         if(nes.ppu.frameComplete == true)
         {
-            // Event Handling
+            // User Controls Handling
             if (SDL_PollEvent(&event))
             {
                 switch(event.type)
@@ -749,6 +744,9 @@ bool MARS::eventHandler()
                         break;
                 };
             };
+            // Get NES Controller Input
+            getControllerState();
+
             // Calculate Framerate
             calculateFrameRate();
 
