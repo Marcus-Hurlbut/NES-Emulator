@@ -10,8 +10,8 @@ using namespace std;
 #include <stdint.h>
 #include <iostream>
 #include <deque>
+#include "Disassembly.h"
 
-//#include "Log.h"
 
 class Bus;
 
@@ -25,7 +25,8 @@ class Cpu
     public:
         // Link Communication to the Bus
         Bus *bus = nullptr;
-        void ConnectBus(Bus *n) { 
+        void ConnectBus(Bus *n)
+        { 
             bus = n;
         }
 
@@ -140,16 +141,16 @@ class Cpu
     public:
         // Disassembly and Log Functions
 
-        struct Disassembly
+        struct Disassem
         {
-            std::string mem_location;
-            std::string get_instruction;
-            std::string get_addrmode;
-            uint8_t get_opcode;
-            std::string get_opcode_instruction[2];
-            std::deque<std::string> disassembly; 
+            uint8_t opcode;
+            uint8_t operands[2];
+            int num_oper;
+            uint16_t addr;
         };
-        Disassembly d;
+        Disassem d;
+
+        int new_instruction = false;
 
         // Disassembly Log dimensions
         int disassemblySize = 0;
@@ -158,7 +159,6 @@ class Cpu
         std::string disassembly_line;
 
         std::string thisDis = "";
-        bool newInstruction = false;
 
         // Disassembly Opcode hex helpers
         std::stringstream ss;
@@ -168,5 +168,7 @@ class Cpu
         inline void setDisassemblyLog(std::string &disassembly);
         inline void setDisassemblyOp(uint8_t op1, uint8_t op2, bool multiple_op);
         bool renderDisassembly = false;
+
+        Disassembly log;
 
 };

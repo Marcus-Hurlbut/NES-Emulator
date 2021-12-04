@@ -2,9 +2,24 @@
 #include <sstream>
 #include <array>
 #include <string>
-#include <vector>
 #include <deque>
-#include <map>
+#include <unordered_map>
+#include <cstring>
+#include <stdio.h>
+#include <vector>
+#include <bitset>
+#include <stdint.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <memory>
+#include <windows.h>
+#include <algorithm>
+
+#define DEQUE_SIZE 18
+#define HEX_CHAR_SIZE 3
+#define INSTR_CHAR_SIZE 5
+#define ADDRMODE_CHAR_SIZE 4
 
 class Disassembly
 {
@@ -14,41 +29,57 @@ class Disassembly
 		~Disassembly();
 
 		// Takes in Data to Log Disassembly
-		void logDisassembly(uint8_t& opcode, uint8_t& operands[2], uint16_t& addr);
+		void logDisassembly(uint8_t opcode, uint8_t operands[2], int numOpers, uint16_t addr);
 
-		// Formatting Functions
-		void formatDisassemblyLine();
-		inline std::string formatHex(uint8_t& n);
-		
+		// Hex Formatter - Integer to String Hex Values
+		char* formatHex(uint8_t n);		
+
+		// Get Functions
+		std::deque <std::string> getDisassemblyQueue();
+		const char* getInstruction();
+		const char* getAddrMode();
+		const char* getOps();
+		const char* getOpcode();
 
 	private:
-		// 6502 Instruction Variables
+		// NES Disassembly 
 		struct NESDisassembly
 		{
 			std::string pcaddr;
-			std::string opcode;
-			std::string operand[2];
-			std::string addrmode;
-			std::string instruction;
+			char* pc;
+			char* opcode;
+			char* operand[2];
+			int num_operands = 0;
+			char* instruction;
+			char* addrmode;
+			char* op_line;
 			std::string line;
 		};
-		NESDisassembly nDisassembly;
 
-
-		// Structure of OpLookup Table Disassembly
-		struct NESInstructionDisassembly
+		// NES Opcode 
+		struct NESOpcodeTable
 		{
-			std::string opcode;
-			std::string operand[2];
-			std::string addrmode;
-			std::string instruction;
+			char instruction[INSTR_CHAR_SIZE];
+			char addrmode[ADDRMODE_CHAR_SIZE];
 		};
 
-		// Disassembly Queue
-		std::deque<std::string> disassemby_queue;
+		// Hex Lookup
+		struct HexTable
+		{ 
+			char hex_string[HEX_CHAR_SIZE]; 
+		};		
+	
 
-		// Lookup tables 
-		std::map<int,std::string> hex_lookup;
-		std::vector<NESInstructionDisassembly> nes_opLookup;
+	private:
+		HexTable hex_lookup[256];					// Hex Lookup - (8-bit for now)
+		NESOpcodeTable disassemOp_lookup[256];		// Opcode Lookup
+		NESDisassembly nDisassembly;				// Disassembly Elements
+		std::deque <std::string> disassemby_queue;	// Disassembly Queue
+		std::string addr;							// Addr Mode for Disassembly Line Format
+
+		// Logging Functions
+		void disassemblyQueueHandler();					// Handles Disassembly Queue
+		void formatDisassemblyLine(uint8_t &opcode);	// Formats Disassembly Line for Queue
+		void writeLog();
 
 };

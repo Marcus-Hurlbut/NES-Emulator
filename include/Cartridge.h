@@ -10,8 +10,8 @@
 #include <cstdint>
 #include <memory>
 
-#include "Mapper_000.h"
-#include "Mapper_002.h"
+#include "Mapper000.h"
+#include "Mapper002.h"
 
 class Cartridge
 {

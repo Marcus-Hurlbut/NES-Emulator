@@ -132,34 +132,31 @@ class MARS
         SDL_Color White = {255, 255, 255};
         SDL_Color Gold = {212, 175, 55};
 
-        bool eventHandler();
         bool debMode = false;
         
     // NES Functions
+    public: 
+        bool eventHandler();                                // Emulator event handler
+
     private:
         uint8_t selectedPalette = 0;
         vector<PixelPlane> pix;
         SDL_Texture *pixelTexture;
 
-        void init();
+        void init();                                        // Initialize SDL avariables function
 
         void drawPatternTables();                           // Draw NES Pattern tables
         inline void resetPatternTables(uint8_t palette);    // Reset Pattern Table Buffers
         void drawPalettes();                                // Draw NES Palette Colors
-
-        void drawNesInfo();                    // Draw NES CPU & PPU Register values
-        void drawEngineInfo();                 // Draw System Information and Disassembly
-        void drawNesFrame();                   // Draw NES Frame Pixels
-
-        uint32_t aRGB(uint32_t R, uint32_t G, uint32_t B, uint32_t a);
-
-                                         
+        void drawNesInfo();                                 // Draw NES CPU & PPU Register values
+        void drawEngineInfo();                              // Draw System Information and Disassembly
+        void drawNesFrame();                                // Draw NES Frame Pixels
+        uint32_t aRGB(uint32_t R, uint32_t G, uint32_t B, uint32_t a);          
         bool keyboardInput(SDL_Event &event);
         void getControllerState();
         void logWrite();
 
-    // Assistive Functions
-    private:
+        // Assistive Functions
         void renderTexture(TTF_Font* font, const char *text, SDL_Color &color);     // Renders a text texture
         inline const char* getHexValue(uint8_t num);                                // Get String Hex Value
         void renderScreen();                                                        // Render All Screen Components
