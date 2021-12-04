@@ -85,14 +85,14 @@ class Ppu
         };
         
         // Get & Set CPU mapped, PPU Registers Bits
-        inline uint8_t getControllerFlags(ControllerFlags cBits);     // Get Controller Bits
-        inline void setControllerFlags(ControllerFlags cBits, bool mode);   // Set or clear Controller bit values
+        uint8_t getControllerFlags(ControllerFlags cBits);     // Get Controller Bits
+        void setControllerFlags(ControllerFlags cBits, bool mode);   // Set or clear Controller bit values
 
-        inline uint8_t getMaskBits(MaskBits mBits);                 // Get Mask Bits
-        inline void setMaskBits(MaskBits, bool mode);               // Set or clear P bit values
+        uint8_t getMaskBits(MaskBits mBits);                 // Get Mask Bits
+        void setMaskBits(MaskBits, bool mode);               // Set or clear P bit values
 
-        inline uint8_t getStatusBits(StatusBits sBits);             // Get Status Bits
-        inline void setStatusBits(StatusBits, bool mode);           // Set or clear P bit values
+        uint8_t getStatusBits(StatusBits sBits);             // Get Status Bits
+        void setStatusBits(StatusBits, bool mode);           // Set or clear P bit values
     
 
     
@@ -126,7 +126,7 @@ class Ppu
         // Palette Table and Colors Table are Physically in the PPU (No Mapping)
         struct Tables
         {
-            std::vector <RGB> colors;      // 2C02 Color palette of RGB values
+            RGB colors[64];      // 2C02 Color palette of RGB values
             uint8_t palettesMem[32];       // Memory locations for sprites & background
         };
         Tables tbl;
@@ -274,6 +274,6 @@ class Ppu
 
         // Sprite functions
         bool spriteRangeCheck();
-        void checkSpritePriority(uint8_t bkg_pixel, uint8_t bkg_pal, uint8_t spr_pixel, uint8_t spr_pal);
+        void checkSpritePriority(uint8_t &bkg_pixel, uint8_t &bkg_pal, uint8_t &spr_pixel, uint8_t &spr_pal);
    
 };
