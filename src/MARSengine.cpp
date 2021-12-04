@@ -54,12 +54,7 @@ bool MARS::keyboardInput(SDL_Event &event)
 
         default:
             break;
-
     }
-
-    // Get NES Controller Input
-    getControllerState();
-
     return true;
 }
 
@@ -129,26 +124,18 @@ void MARS::renderTexture(TTF_Font* font, const char *text, SDL_Color &color)
 // Get Hex Value in String Form (Assistive function)
 inline const char* MARS::getHexValue(uint8_t num)
 {
-    // Clear String Stream & Initialize
-    text_ss.str(std::string());
-    text_ss.clear();
-
-    // Get Hex Value
-    text_ss << std::hex << (int)num;
-    const char* hex = text_ss.str().c_str();
-
-    return hex;
+    return nes.cpu.log.formatHex(num);
 }
 
 
-// Speed of the Overall Emulator clock speed (before synchronizing to run at 60 FPS)
+// Overall Speed of the Emulator's frame rendering (before synchronizing to run at 60 FPS)
 void MARS::calculateEmulatorSpeed()
 {
     marsSpeed = SDL_GetTicks();
     marsSpeed = (marsSpeed - marsStart);
 }
 
-
+// Calulate number of frames iterated each second in application
 void MARS::calculateFrameRate()
 {
     // Current Tick count
@@ -169,7 +156,7 @@ void MARS::calculateFrameRate()
 }
 
 
-// Synchronize Clock speed to Render at contant 60 FPS 
+// Synchronize Clock speed to Render at contant 60 FPS using Chrono
 void MARS::syncClockSpeed()
 {
     long time_span = 0;
@@ -193,7 +180,12 @@ void MARS::drawNesInfo()
     W = 100;
     H = 35;
     renderTexture(styled_font, "PC:", Red);
-    const char *pc = getHexValue(nes.cpu.reg.PC);
+
+    std::string s_PC;
+
+    s_PC = getHexValue(((nes.cpu.reg.PC & 0xFF00) >> 8));
+    s_PC += getHexValue(((nes.cpu.reg.PC) & 0x00FF));
+    const char* pc = s_PC.c_str();
     X = RIGHT_R_JUSTIFIED;
     W += 50;
     renderTexture(lg_font, pc, White);
@@ -338,19 +330,19 @@ void MARS::drawNesInfo()
     renderTexture(lg_font, gCountVal, White);
 
     // Draw Instruction
+    
     X = RIGHT_L_JUSTIFIED;
     Y = 1050;
     W = 150;
     H = 35;
     renderTexture(styled_font, "INSTRUCTION:", Red);
-    std::string instruction = nes.cpu.d.get_instruction;
-    const char* instructVal = instruction.c_str();
+    const char* instructVal = nes.cpu.log.getInstruction();
     X = RIGHT_R_JUSTIFIED;
     Y = 1050;
     W = 100;
     H = 35;
     renderTexture(lg_font, instructVal, White);
-
+    
 
     // Draw Address Mode
     X = RIGHT_L_JUSTIFIED;
@@ -359,52 +351,52 @@ void MARS::drawNesInfo()
     H = 35;
     renderTexture(styled_font, "ADDR MODE:", Red);
 
-    std::string addrm = nes.cpu.d.get_addrmode;
-    const char* addrmode = addrm.c_str();
+    
+    const char* addrmode = nes.cpu.log.getAddrMode();
     X = RIGHT_R_JUSTIFIED;
     Y = 1100;
     W = 100;
     H = 35;
     renderTexture(lg_font, addrmode, White);
-
-    // Draw Opcodes
+    
+    
+    // Draw Opcode & Operands
     X = RIGHT_L_JUSTIFIED;
     Y = 1150;
     W = 125;
     H = 35;
     renderTexture(styled_font, "OPCODES:", Red);
-    text_ss.str(std::string());
-    text_ss.clear();
-    text_ss << std::hex << (int)nes.cpu.d.get_opcode;
-    text_ss << " " << nes.cpu.d.get_opcode_instruction[0] << " " << nes.cpu.d.get_opcode_instruction[1];
-    const char* opcode = text_ss.str().c_str();
+    
+    
+    const char* opcode = nes.cpu.log.getOpcode();
     X = RIGHT_R_JUSTIFIED;
     Y = 1150;
-    W = 200;
+    W = 65;
     H = 35;
     renderTexture(lg_font, opcode, White);
+    
 
+    
     // Draw Disassembly Log
     X = 150;
     Y = 500;
     W = 250;
     H = 35;
     renderTexture(styled_font, "- DISASSEMBLY -", Red);
-    auto vDisassembly = nes.cpu.d.disassembly;
     
-    j = 0;
     X = LEFT_L_JUSTIFIED;
     Y = 575;
     W = 425;
     H = 35;
-    for (auto i = 0; i != vDisassembly.size(); i++)
+     
+    auto que = nes.cpu.log.getDisassemblyQueue();
+
+    for (auto i = 0; i != que.size(); i++)
     {
-        const char* disassembly = vDisassembly[i].c_str();
+        const char* disassembly = que[i].c_str();
         renderTexture(sm_font, disassembly, White);
         Y += 35;
-        j++;
-    };
-
+    };   
 }
 
 // Draws the Emulator system information text
@@ -470,7 +462,6 @@ void MARS::drawEngineInfo()
     W = 120;
     H = 35;
     renderTexture(styled_font, "CLOCK SPEED", Red);
-    
     sFps = std::to_string((marsSpeed));
     const char *mars_clock = sFps.c_str();
     X = RIGHT_R_JUSTIFIED - 50;
@@ -556,6 +547,7 @@ void MARS::drawPatternTables()
             }
             else
             {
+                // Map buffer addresss to the X & Y Coordinates
                 location =  (plane.left[j].Y * 128) + plane.left[j].X;
             };
             leftPlaneBuffer[location] = aRGB(plane.left[j].red, plane.left[j].green, plane.left[j].blue, 255);
@@ -663,22 +655,26 @@ void MARS::logWrite()
     std::string disassembly = nes.cpu.thisDis;
     ofstream wLog("C:\\Users\\Thugs4Less\\Desktop\\Program Projects\\NES\\log\\disassembly.txt", std::ofstream::app);
 
-    if(nes.cpu.newInstruction == true && ((nes.NES_SystemClock % 3) == 0))
+    if(nes.cpu.new_instruction == true && ((nes.NES_SystemClock % 3) == 0))
     {       
         if(wLog.is_open())
         {
-            wLog << disassembly << "\t";
-            wLog << std::hex << (int)nes.cpu.d.get_opcode;
-            wLog << " ";
-            wLog << nes.cpu.d.get_opcode_instruction[0];
-            wLog << " ";
-            wLog << nes.cpu.d.get_opcode_instruction[1];
+            //wLog << disassembly << "\t";
+            //wLog << std::hex << (int)nes.cpu.d.get_opcode;
+            //wLog << " ";
+            //wLog << nes.cpu.d.get_opcode_instruction[0];
+            //wLog << " ";
+            //wLog << nes.cpu.d.get_opcode_instruction[1];
 
-            wLog << "\t\t A:";  wLog << std::hex << (int) nes.cpu.reg.A;
-            wLog << " X:";    wLog << std::hex << (int) nes.cpu.reg.X;
-            wLog << " Y:";    wLog << std::hex << (int) nes.cpu.reg.Y;
-            wLog << " P:";    wLog << std::hex << (int) nes.cpu.reg.P;
-            wLog << " SP:";   wLog << std::hex << (int) nes.cpu.reg.S;
+            //wLog << "\t\t A:";  wLog << std::hex << (int) nes.cpu.reg.A;
+            //wLog << " X:";    wLog << std::hex << (int) nes.cpu.reg.X;
+            //wLog << " Y:";    wLog << std::hex << (int) nes.cpu.reg.Y;
+            //wLog << " P:";    wLog << std::hex << (int) nes.cpu.reg.P;
+            //wLog << " SP:";   wLog << std::hex << (int) nes.cpu.reg.S;
+
+            //wLog << "\t\t DISASSEMBLY: ";  wLog << nes.cpu.log.getDisassemblyQueue(0);
+            //wLog << " OPS: ";    wLog << nes.cpu.log.getOps();
+
 
             wLog << "\n";
             wLog.close();
@@ -721,13 +717,13 @@ bool MARS::eventHandler()
         while(nes.ppu.frameComplete == false)
         {
             nes.systemClock();
-            // logWrite();  -- uncomment for txt log -- 
+            //logWrite();  // -- uncomment for txt log -- 
         };
 
         // Render Frame & get User Input
         if(nes.ppu.frameComplete == true)
         {
-            // Event Handling
+            // User Controls Handling
             if (SDL_PollEvent(&event))
             {
                 switch(event.type)
@@ -749,6 +745,9 @@ bool MARS::eventHandler()
                         break;
                 };
             };
+            // Get NES Controller Input
+            getControllerState();
+
             // Calculate Framerate
             calculateFrameRate();
 
@@ -776,7 +775,7 @@ void MARS::init()
     TTF_Init();
     
     // Main window & Main Renderer
-    window = SDL_CreateWindow("MARS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_WINDOW_FULLSCREEN);
+    window = SDL_CreateWindow("MARS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0); // SDL_WINDOW_FULLSCREEN
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // Debug window & Debug Renderer

@@ -192,6 +192,7 @@ void Bus::systemClock()
         ppu.NMI = false;
     };
 
+    // Render Disassembly only towards end of frame (optimization)
     if (ppu.renderDisassembly)
     {
         cpu.renderDisassembly = true;

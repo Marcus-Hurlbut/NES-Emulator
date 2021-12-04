@@ -6,7 +6,7 @@
 Ppu::Ppu()
 {
     // Set pixels to RGB color engine
-    tbl.colors = {
+    RGB c[64] = {
 
         // Row 1
         {84, 84, 84}, {0, 30, 116}, {8, 16, 144}, {48, 0, 136}, {68, 0, 100}, {92, 0, 48}, {84, 4, 0},{60, 24, 0},
@@ -25,7 +25,7 @@ Ppu::Ppu()
         {204, 210, 120}, {180, 222, 120}, {168, 226, 144}, {152, 226, 180}, {160, 214, 228}, {160, 162, 160}, {0, 0, 0}, {0, 0, 0}   
 
     };
-
+    memcpy(&tbl.colors, &c, sizeof(c));
     memset(screenPixels, 0, sizeof(screenPixels)); 
 }
 
@@ -366,19 +366,16 @@ void Ppu::cpuWrite(uint16_t addr, uint8_t data)
 // PPU MAPPED REGISTERS
 
 // Controller Flag Operations
-inline uint8_t Ppu::getControllerFlags(ControllerFlags cBits)
+uint8_t Ppu::getControllerFlags(ControllerFlags cBits)
 {
-    if ((r.controller & cBits) > 0)
+    if (r.controller & cBits)
     {
         return 1;
     }
-    else
-    {
-        return 0;
-    };
+    return 0;
 }
 
-inline void Ppu::setControllerFlags(ControllerFlags cBits, bool mode) 
+void Ppu::setControllerFlags(ControllerFlags cBits, bool mode) 
 {
     if(mode) 
     {
@@ -391,19 +388,16 @@ inline void Ppu::setControllerFlags(ControllerFlags cBits, bool mode)
 }
 
 // Mask Flag Operations
-inline uint8_t Ppu::getMaskBits(MaskBits mBits)
+uint8_t Ppu::getMaskBits(MaskBits mBits)
 {
-    if ((r.mask & mBits) > 0)
+    if (r.mask & mBits)
     {
         return 1;
     }
-    else 
-    {
-        return 0;
-    };
+    return 0;
 }
 
-inline void Ppu::setMaskBits(MaskBits mBits, bool mode)
+void Ppu::setMaskBits(MaskBits mBits, bool mode)
 {
     if(mode)
     {
@@ -416,19 +410,16 @@ inline void Ppu::setMaskBits(MaskBits mBits, bool mode)
 }
 
 // Status Flag Operations
-inline uint8_t Ppu::getStatusBits(StatusBits sBits)
+uint8_t Ppu::getStatusBits(StatusBits sBits)
 {
-    if((r.status & sBits) > 0)
+    if(r.status & sBits)
     {
         return 1;
     }
-    else 
-    {
-        return 0;
-    };
+    return 0;
 }
 
-inline void Ppu::setStatusBits(StatusBits sBits, bool mode)
+void Ppu::setStatusBits(StatusBits sBits, bool mode)
 {
     if (mode)
     {
@@ -909,7 +900,7 @@ bool Ppu::spriteRangeCheck()
     return false;
 }
 
-void Ppu::checkSpritePriority(uint8_t bkg_pixel, uint8_t bkg_pal, uint8_t spr_pixel, uint8_t spr_pal)
+void Ppu::checkSpritePriority(uint8_t &bkg_pixel, uint8_t &bkg_pal, uint8_t &spr_pixel, uint8_t &spr_pal)
 {
 
     // Background Pixel is visible
@@ -1035,17 +1026,13 @@ void Ppu::setScreenPixels()
     // Read the Addr that stores the color value
     palAddr = ppuRead(0x3F00 + (screenPalette << 2) + screenPixel) & 0x3F;
 
+    // Copy Pixel information to Screen Pixel buffer
+    screenPixels[pixel_counter] = {tbl.colors[palAddr].red ,
+                                   tbl.colors[palAddr].green,
+                                   tbl.colors[palAddr].blue,
+                                   renderPixel.X = cycles - 1,
+                                   renderPixel.Y = scanLine };
 
-    // Get RGB values from color palette
-    renderPixel.red = tbl.colors[palAddr].red;
-    renderPixel.green = tbl.colors[palAddr].green;
-    renderPixel.blue = tbl.colors[palAddr].blue;
-    renderPixel.X = cycles - 1;
-    renderPixel.Y = scanLine;
-
-    // Render Pixel to Screen through Game Engine
-
-    screenPixels[pixel_counter] = renderPixel;
     pixel_counter++;
 
     if (pixel_counter == 61440)
@@ -1279,7 +1266,7 @@ void Ppu::tick()
                     NMI = true;
                 };
             };
-            if(scanLine == 260 && cycles > 270)
+            if(scanLine == 260 && cycles > 290)
             {
                 renderDisassembly = true;
             };
