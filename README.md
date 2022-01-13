@@ -15,20 +15,12 @@ Huge thank you to the following people for making this journey possible:
    - SDL library
    - TTL library
 
-# Bugs to Fix / To-Do List:          
-   - MAPPERS
+# Features needing to be added:          
 		1. Implement Mapper 004
 		2. Implement Mapper 003
 		3. Implement Mapper 001
-
-   - MARS (SDL)
-		1. Design elegant way to switch between ROMs in runtime
-		2. Implement Save States
-		3. Create UI Overlay / Port to 3D engine (likely Vulkan)
-
-   - CPU: 
-		1. Redesign address modes and instructions to achieve cycle accuaracy
-		2. Optimize Disassembly Log & add to separate module 
- 
-   - APU
-   		1. Implement Sound APU unit
+		4. Design elegant way to switch between ROMs in runtime
+		5. Implement Save States
+		6. Create UI Overlay / Port to 3D engine (likely Vulkan)
+		7. Optimize Disassembly Log & add to separate module 
+   		8. Implement Sound APU unit
